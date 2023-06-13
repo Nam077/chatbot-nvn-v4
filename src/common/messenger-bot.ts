@@ -2,8 +2,8 @@ import axios from 'axios';
 
 export const enum SenderAction {
     MARK_SEEN = 'mark_seen',
-    TYPING_ON = 'typing_on',
     TYPING_OFF = 'typing_off',
+    TYPING_ON = 'typing_on',
 }
 
 export type UserProfileField =
@@ -28,19 +28,19 @@ export type User = {
     timezone?: number;
     gender?: string;
 };
-enum ButtonType {
+export enum ButtonType {
     POSTBACK = 'postback',
     WEB_URL = 'web_url',
 }
 
-interface Button {
+export interface Button {
     type: ButtonType;
     title: string;
     payload?: string;
     url?: string;
 }
 
-enum TemplateType {
+export enum TemplateType {
     BUTTON = 'button',
     GENERIC = 'generic',
     COUPON = 'coupon',
@@ -51,29 +51,38 @@ enum TemplateType {
     CUSTOMER_INFORMATION = 'customer_information',
 }
 
-type QuickReplyType = 'text' | 'user_phone_number' | 'user_email';
+export type QuickReplyType = 'text' | 'user_phone_number' | 'user_email';
 
-interface QuickReply {
+export interface QuickReply {
     content_type: QuickReplyType;
     title?: string;
     payload?: string;
     image_url?: string;
 }
-interface Template {
-    template_type: string;
+export interface Template {
+    template_type: TemplateType;
     text?: string;
     buttons?: Button[];
     elements?: any[];
     payload?: any;
 }
-type CallToActionType = 'postback' | 'web_url' | 'phone_number' | 'element_share';
+export type CallToActionType = 'postback' | 'web_url';
 export type CallToAction = {
-    type:
-}
+    type: CallToActionType;
+    title: string;
+    payload?: string;
+    url?: string;
+    webview_height_ratio?: string;
+};
 export type PersistentMenu = {
     locale: string;
     composer_input_disabled: boolean;
-    call_to_actions: any[];
+    call_to_actions: CallToAction[];
+};
+
+export type Greeting = {
+    locale: string;
+    text: string;
 };
 
 export class MessengerBot {
@@ -190,5 +199,47 @@ export class MessengerBot {
             },
         };
         await this.callSendAPI(senderPsid, response);
+    }
+
+    async setPersistentMenu(persistentMenu: PersistentMenu[]) {
+        const requestBody = {
+            persistent_menu: persistentMenu,
+        };
+        try {
+            return await axios.post(`${this._url}me/messenger_profile`, requestBody, {
+                headers: this._headers,
+            });
+        } catch (error) {
+            console.error('Have error when set persistent menu');
+        }
+    }
+    async deletePersistentMenu() {
+        const requestBody = {
+            fields: ['persistent_menu'],
+        };
+        try {
+            return await axios.delete(`${this._url}me/messenger_profile`, {
+                headers: this._headers,
+                data: requestBody,
+            });
+        } catch (error) {
+            console.error('Have error when delete persistent menu');
+        }
+    }
+
+    async setGetStartedButton(payload: string, greeting: Greeting[]) {
+        const requestBody = {
+            get_started: {
+                payload: payload,
+            },
+            greeting: greeting,
+        };
+        try {
+            return await axios.post(`${this._url}me/messenger_profile`, requestBody, {
+                headers: this._headers,
+            });
+        } catch (error) {
+            console.error('Have error when set get started button');
+        }
     }
 }
