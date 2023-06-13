@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { TypeOrmModuleOptions, TypeOrmOptionsFactory } from '@nestjs/typeorm';
+import { User } from '../user/entities/user.entity';
 
 @Injectable()
 export class DatabaseConfigService implements TypeOrmOptionsFactory {
@@ -10,9 +11,10 @@ export class DatabaseConfigService implements TypeOrmOptionsFactory {
         return {
             type: 'better-sqlite3',
             database: this.configService.get<string>('DB_NAME'),
-            entities: [__dirname + '/../../**/*.entity{.ts,.js}'],
+            entities: [User],
             synchronize: true,
             autoLoadEntities: true,
+            logging: true,
         };
     }
 }
