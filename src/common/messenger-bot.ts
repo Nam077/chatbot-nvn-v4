@@ -59,10 +59,22 @@ interface QuickReply {
     payload?: string;
     image_url?: string;
 }
-
 interface Template {
     template_type: string;
+    text?: string;
+    buttons?: Button[];
+    elements?: any[];
+    payload?: any;
 }
+type CallToActionType = 'postback' | 'web_url' | 'phone_number' | 'element_share';
+export type CallToAction = {
+    type:
+}
+export type PersistentMenu = {
+    locale: string;
+    composer_input_disabled: boolean;
+    call_to_actions: any[];
+};
 
 export class MessengerBot {
     private _pageAccessToken: string;
