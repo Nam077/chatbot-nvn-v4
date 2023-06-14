@@ -5,6 +5,7 @@ import { DatabaseModule } from './modules/database/database.module';
 import { ConfigModule } from '@nestjs/config';
 import { UserModule } from './modules/user/user.module';
 import { MessengerModule } from './modules/messenger/messenger.module';
+import { SettingModule } from './modules/setting/setting.module';
 
 @Module({
     imports: [
@@ -15,6 +16,7 @@ import { MessengerModule } from './modules/messenger/messenger.module';
         DatabaseModule,
         UserModule,
         MessengerModule,
+        SettingModule,
     ],
     controllers: [AppController],
     providers: [AppService],

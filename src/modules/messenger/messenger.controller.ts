@@ -12,7 +12,6 @@ export class MessengerController {
         @Query('hub.challenge') challenge: string,
         @Query('hub.verify_token') verifyToken: string,
     ) {
-        console.log(mode, challenge, verifyToken);
         return this.messengerService.getWebHook(mode, challenge, verifyToken);
     }
 

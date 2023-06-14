@@ -1,12 +1,11 @@
 import { ForbiddenException, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { MessengerBot } from '../../common/messenger-bot';
+import { BotMessenger } from './models/bot-messenger';
 
 @Injectable()
 export class MessengerService {
-    constructor(private readonly configService: ConfigService, private readonly messengerBot: MessengerBot) {
-        this.messengerBot.pageAccessToken = this.configService.get<string>('MESSENGER_PAGE_ACCESS_TOKEN');
-    }
+    constructor(private readonly configService: ConfigService, private messengerBot: BotMessenger) {}
+
     async getWebHook(mode: string, challenge: string, verifyToken: string) {
         if (mode && verifyToken) {
             if (mode === 'subscribe' && verifyToken === this.configService.get<string>('MESSENGER_VERIFY_TOKEN')) {
@@ -33,7 +32,10 @@ export class MessengerService {
     }
 
     private async handleMessage(senderPsid: any, message) {
-        console.log(this.messengerBot.pageAccessToken);
-        await this.messengerBot.sendMessage(senderPsid, message.text);
+        const messageTest = ['Hello', 'Hi', 'Xin chào', 'Chào bạn', 'Chào', 'Hello bạn', 'Hi bạn'];
+
+        for (const element of messageTest) {
+            await this.messengerBot.sendMessage(senderPsid, element);
+        }
     }
 }

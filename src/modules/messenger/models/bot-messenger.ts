@@ -1,4 +1,5 @@
-import axios from 'axios';
+import { HttpException, Injectable } from '@nestjs/common';
+import { HttpService } from '@nestjs/axios';
 
 export const enum SenderAction {
     MARK_SEEN = 'mark_seen',
@@ -7,7 +8,6 @@ export const enum SenderAction {
 }
 
 export type UserProfileField =
-    // Granted by default
     | 'id'
     | 'name'
     | 'first_name'
@@ -28,6 +28,7 @@ export type User = {
     timezone?: number;
     gender?: string;
 };
+
 export enum ButtonType {
     POSTBACK = 'postback',
     WEB_URL = 'web_url',
@@ -59,6 +60,7 @@ export interface QuickReply {
     payload?: string;
     image_url?: string;
 }
+
 export interface Template {
     template_type: TemplateType;
     text?: string;
@@ -66,6 +68,7 @@ export interface Template {
     elements?: any[];
     payload?: any;
 }
+
 export type CallToActionType = 'postback' | 'web_url';
 export type CallToAction = {
     type: CallToActionType;
@@ -73,6 +76,13 @@ export type CallToAction = {
     payload?: string;
     url?: string;
     webview_height_ratio?: string;
+};
+export type Element = {
+    title: string;
+    subtitle?: string;
+    image_url?: string;
+    default_action?: CallToAction;
+    buttons?: Button[];
 };
 export type PersistentMenu = {
     locale: string;
@@ -85,16 +95,22 @@ export type Greeting = {
     text: string;
 };
 
-export class MessengerBot {
-    private _pageAccessToken: string;
-    private _headers: any;
-    private _url: string;
-    private _apiVersion: string;
+export interface MessengerBotOptions {
+    pageAccessToken: string;
+    apiVersion?: string;
+}
 
-    constructor(pageAccessToken: string) {
-        this._pageAccessToken = pageAccessToken;
-        this._apiVersion = 'v17.0';
-        this._url = `https://graph.facebook.com/${this._apiVersion}/`;
+@Injectable()
+export class BotMessenger {
+    private _pageAccessToken: string;
+    private _apiVersion: string;
+    private readonly url: string;
+
+    constructor(private options: MessengerBotOptions, private readonly httpService: HttpService) {
+        this._pageAccessToken = options.pageAccessToken;
+        this._apiVersion = options.apiVersion || 'v10.0';
+        this.url = `https://graph.facebook.com/${this.apiVersion}/me/`;
+        this.initializeAxios();
     }
 
     get pageAccessToken(): string {
@@ -103,10 +119,7 @@ export class MessengerBot {
 
     set pageAccessToken(value: string) {
         this._pageAccessToken = value;
-        this._headers = {
-            'Content-Type': 'application/json',
-            Authorization: 'Bearer ' + this._pageAccessToken,
-        };
+        this.initializeHeaders();
     }
 
     get apiVersion(): string {
@@ -115,58 +128,36 @@ export class MessengerBot {
 
     set apiVersion(value: string) {
         this._apiVersion = value;
-        this._url = `https://graph.facebook.com/${this._apiVersion}/`;
+    }
+    private initializeAxios() {
+        this.httpService.axiosRef.defaults.baseURL = this.url;
+        this.initializeHeaders();
     }
 
-    get headers(): any {
-        return this._headers;
+    private initializeHeaders() {
+        this.httpService.axiosRef.defaults.headers.common['Content-Type'] = 'application/json';
+        this.httpService.axiosRef.defaults.headers.common['Authorization'] = `Bearer ${this.pageAccessToken}`;
     }
 
-    set headers(value: any) {
-        this._headers = value;
-    }
-
-    async sendMessage(senderPsid: string, message: string) {
-        const response = {
-            text: message,
-        };
-        await this.callSendAPI(senderPsid, response);
-    }
-
-    async callSendAPI(senderPsid: string, response: any) {
-        await this.sendMarkSeen(senderPsid);
-        await this.sendTypingOn(senderPsid);
+    private async callSendAPI(senderPsid: string, responseData: any) {
         const requestBody = {
             recipient: {
                 id: senderPsid,
             },
-            message: response,
+            message: responseData,
         };
+        await this.sendMarkSeen(senderPsid);
+        await this.sendTypingOn(senderPsid);
         try {
-            return await axios.post(`${this._url}me/messages`, requestBody, {
-                headers: this._headers,
-            });
+            return await this.httpService.axiosRef.post('messages', requestBody);
         } catch (error) {
-            console.error('Have error when call send api');
+            return;
         } finally {
-            console.log('Send message success');
             await this.sendTypingOff(senderPsid);
         }
     }
 
-    async sendMarkSeen(senderPsid: string) {
-        await this.sendAction(senderPsid, SenderAction.MARK_SEEN);
-    }
-
-    async sendTypingOn(senderPsid: string) {
-        await this.sendAction(senderPsid, SenderAction.TYPING_ON);
-    }
-
-    async sendTypingOff(senderPsid: string) {
-        await this.sendAction(senderPsid, SenderAction.TYPING_OFF);
-    }
-
-    async sendAction(senderPsid: string, senderAction: SenderAction) {
+    private async sendAction(senderPsid: string, senderAction: SenderAction) {
         const requestBody = {
             recipient: {
                 id: senderPsid,
@@ -174,13 +165,29 @@ export class MessengerBot {
             sender_action: senderAction,
         };
         try {
-            return await axios.post(`${this._url}me/messages`, requestBody, {
-                headers: this._headers,
-            });
+            return await this.httpService.axiosRef.post('messages', requestBody);
         } catch (error) {
-            // console.log(error);
-            // console.error('Have error when send action ' + senderAction);
+            return;
         }
+    }
+
+    async sendMessage(senderPsid: string, message: string) {
+        const response = {
+            text: message,
+        };
+        return await this.callSendAPI(senderPsid, response);
+    }
+
+    async sendMarkSeen(senderPsid: string) {
+        return await this.sendAction(senderPsid, SenderAction.MARK_SEEN);
+    }
+
+    async sendTypingOn(senderPsid: string) {
+        return await this.sendAction(senderPsid, SenderAction.TYPING_ON);
+    }
+
+    async sendTypingOff(senderPsid: string) {
+        return await this.sendAction(senderPsid, SenderAction.TYPING_OFF);
     }
 
     async sendQuickReply(senderPsid: string, message: string, quickReplies: QuickReply[]) {
@@ -188,7 +195,7 @@ export class MessengerBot {
             text: message,
             quick_replies: quickReplies,
         };
-        await this.callSendAPI(senderPsid, response);
+        return await this.callSendAPI(senderPsid, response);
     }
 
     async sendTemplate(senderPsid: string, template: Template) {
@@ -198,7 +205,7 @@ export class MessengerBot {
                 payload: template,
             },
         };
-        await this.callSendAPI(senderPsid, response);
+        return await this.callSendAPI(senderPsid, response);
     }
 
     async setPersistentMenu(persistentMenu: PersistentMenu[]) {
@@ -206,24 +213,23 @@ export class MessengerBot {
             persistent_menu: persistentMenu,
         };
         try {
-            return await axios.post(`${this._url}me/messenger_profile`, requestBody, {
-                headers: this._headers,
-            });
+            return await this.httpService.axiosRef.post('me/messenger_profile', requestBody);
         } catch (error) {
-            console.error('Have error when set persistent menu');
+            console.error('Set persistent menu failed');
+            // throw error;
         }
     }
+
     async deletePersistentMenu() {
         const requestBody = {
             fields: ['persistent_menu'],
         };
         try {
-            return await axios.delete(`${this._url}me/messenger_profile`, {
-                headers: this._headers,
+            return await this.httpService.axiosRef.delete('me/messenger_profile', {
                 data: requestBody,
             });
         } catch (error) {
-            console.error('Have error when delete persistent menu');
+            console.error('Delete persistent menu failed');
         }
     }
 
@@ -235,11 +241,28 @@ export class MessengerBot {
             greeting: greeting,
         };
         try {
-            return await axios.post(`${this._url}me/messenger_profile`, requestBody, {
-                headers: this._headers,
-            });
-        } catch (error) {
-            console.error('Have error when set get started button');
-        }
+            return await this.httpService.axiosRef.post('me/messenger_profile', requestBody);
+        } catch (error) {}
+    }
+
+    async sendTemplateButton(senderPsid: string, message: string, buttons: Button[]) {
+        const template: Template = {
+            template_type: TemplateType.BUTTON,
+            text: message,
+            buttons: buttons,
+        };
+        return await this.sendTemplate(senderPsid, template);
+    }
+
+    async sendGenericTemplate(senderPsid: string, elements: Element[]) {
+        const template: Template = {
+            template_type: TemplateType.GENERIC,
+            elements: elements,
+        };
+        return await this.sendTemplate(senderPsid, template);
+    }
+
+    async sendMediaTemplate(senderPsid: string, elements: Element[]): Promise<void> {
+        // Code to send media template
     }
 }
