@@ -1,4 +1,4 @@
-import { HttpException, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 
 export const enum SenderAction {
@@ -18,7 +18,7 @@ export type UserProfileField =
     | 'timezone'
     | 'gender';
 
-export type User = {
+export type UserInformation = {
     id: string;
     name: string;
     firstName: string;
@@ -109,7 +109,7 @@ export class BotMessenger {
     constructor(private options: MessengerBotOptions, private readonly httpService: HttpService) {
         this._pageAccessToken = options.pageAccessToken;
         this._apiVersion = options.apiVersion || 'v10.0';
-        this.url = `https://graph.facebook.com/${this.apiVersion}/me/`;
+        this.url = `https://graph.facebook.com/${this.apiVersion}/`;
         this.initializeAxios();
     }
 
@@ -129,6 +129,7 @@ export class BotMessenger {
     set apiVersion(value: string) {
         this._apiVersion = value;
     }
+
     private initializeAxios() {
         this.httpService.axiosRef.defaults.baseURL = this.url;
         this.initializeHeaders();
@@ -146,12 +147,12 @@ export class BotMessenger {
             },
             message: responseData,
         };
+
         await this.sendMarkSeen(senderPsid);
         await this.sendTypingOn(senderPsid);
         try {
-            return await this.httpService.axiosRef.post('messages', requestBody);
+            await this.httpService.axiosRef.post('/me/messages', requestBody);
         } catch (error) {
-            return;
         } finally {
             await this.sendTypingOff(senderPsid);
         }
@@ -165,15 +166,26 @@ export class BotMessenger {
             sender_action: senderAction,
         };
         try {
-            return await this.httpService.axiosRef.post('messages', requestBody);
-        } catch (error) {
-            return;
-        }
+            return await this.httpService.axiosRef.post('/me/messages', requestBody);
+        } catch (error) {}
     }
 
-    async sendMessage(senderPsid: string, message: string) {
+    async sendTextMessage(senderPsid: string, message: string) {
         const response = {
             text: message,
+        };
+        return await this.callSendAPI(senderPsid, response);
+    }
+
+    async sendImageMessage(senderPsid: string, imageUrl: string) {
+        const response = {
+            attachment: {
+                type: 'image',
+                payload: {
+                    url: imageUrl,
+                    is_reusable: true,
+                },
+            },
         };
         return await this.callSendAPI(senderPsid, response);
     }
@@ -215,7 +227,6 @@ export class BotMessenger {
         try {
             return await this.httpService.axiosRef.post('me/messenger_profile', requestBody);
         } catch (error) {
-            console.error('Set persistent menu failed');
             // throw error;
         }
     }
@@ -228,9 +239,7 @@ export class BotMessenger {
             return await this.httpService.axiosRef.delete('me/messenger_profile', {
                 data: requestBody,
             });
-        } catch (error) {
-            console.error('Delete persistent menu failed');
-        }
+        } catch (error) {}
     }
 
     async setGetStartedButton(payload: string, greeting: Greeting[]) {
@@ -264,5 +273,36 @@ export class BotMessenger {
 
     async sendMediaTemplate(senderPsid: string, elements: Element[]): Promise<void> {
         // Code to send media template
+    }
+
+    async getUserProfile(
+        senderPsid: string,
+        fields: UserProfileField[] = ['id', 'name', 'first_name', 'last_name', 'profile_pic'],
+    ): Promise<UserInformation> {
+        try {
+            const response = await this.httpService.axiosRef.get(`/${senderPsid}`, {
+                params: {
+                    fields: fields.join(','),
+                },
+            });
+            return {
+                id: response.data.id,
+                firstName: response.data.first_name,
+                lastName: response.data.last_name,
+                name: response.data.name,
+                profilePic: response.data.profile_pic,
+                gender: response.data.gender || 'neutral',
+                locale: response.data.locale || 'vi_VN',
+                timezone: response.data.timezone || 7,
+            };
+        } catch (error) {
+            return {
+                id: senderPsid,
+                firstName: 'Bạn',
+                lastName: 'Bạn',
+                name: 'Bạn',
+                profilePic: '',
+            };
+        }
     }
 }

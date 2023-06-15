@@ -13,6 +13,7 @@ async function bootstrap() {
         .build();
     const document = SwaggerModule.createDocument(app, config);
     SwaggerModule.setup('api', app, document);
+    console.clear();
     await app.listen(3000);
 }
 bootstrap().then(() => console.log('Application is running on: http://localhost:3000'));
