@@ -16,6 +16,7 @@ import { Link } from '../link/entities/link.entity';
 import { Message } from '../message/entities/message.entity';
 import { Tag } from '../tag/entities/tag.entity';
 import { Image } from '../image/entities/image.entity';
+import { CrawlerService } from './crawler/crawler.service';
 
 @Injectable()
 export class ChatService {
@@ -28,6 +29,7 @@ export class ChatService {
         private readonly fontService: FontService,
         private readonly tagService: TagService,
         private readonly imageService: ImageService,
+        private readonly crawlerService: CrawlerService,
     ) {}
 
     async updateDataFromGoogleSheet() {

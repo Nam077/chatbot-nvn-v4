@@ -10,6 +10,7 @@ import { FontModule } from '../font/font.module';
 import { ResponseModule } from '../response/response.module';
 import { TagModule } from '../tag/tag.module';
 import { ImageModule } from '../image/image.module';
+import { CrawlerService } from './crawler/crawler.service';
 
 @Module({
     imports: [
@@ -23,7 +24,7 @@ import { ImageModule } from '../image/image.module';
         ImageModule,
     ],
     controllers: [ChatController],
-    providers: [ChatService, GoogleSheetService],
+    providers: [ChatService, GoogleSheetService, CrawlerService],
     exports: [ChatService],
 })
 export class ChatModule {}
