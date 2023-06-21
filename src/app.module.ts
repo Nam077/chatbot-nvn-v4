@@ -18,6 +18,7 @@ import { MessageModule } from './modules/message/message.module';
 import { TagModule } from './modules/tag/tag.module';
 import { FontChunkModule } from './modules/font-chunk/font-chunk.module';
 import { CacheModule } from '@nestjs/cache-manager';
+import { AuthModule } from './modules/auth/auth.module';
 
 @Module({
     imports: [
@@ -41,6 +42,7 @@ import { CacheModule } from '@nestjs/cache-manager';
         MessageModule,
         TagModule,
         FontChunkModule,
+        AuthModule,
     ],
     controllers: [AppController],
     providers: [AppService],
