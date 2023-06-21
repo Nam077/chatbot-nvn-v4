@@ -160,12 +160,14 @@ export class SettingService {
     async getPageAccessTokens(): Promise<string> {
         return (await this.getValuesByKey('PAGE_ACCESS_TOKEN', 'string')) as string;
     }
+
     async getApiVersion(defaultValue?: string): Promise<string> {
         if (defaultValue) {
             return (await this.getValuesByKey('API_VERSION', 'string', defaultValue)) as string;
         }
         return (await this.getValuesByKey('API_VERSION', 'string')) as string;
     }
+
     async updatePageAccessToken(value: string): Promise<Setting> {
         const setting = await this.getValuesByKey('PAGE_ACCESS_TOKEN', 'string');
         return await this.settingRepository.save({

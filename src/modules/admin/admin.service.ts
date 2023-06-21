@@ -128,6 +128,7 @@ export class AdminService {
             statusCode: HttpStatus.OK,
         };
     }
+
     async removeBySenderPsid(senderPsid: string) {
         const admin = await this.findOneBySenderPsid(senderPsid);
         if (!admin) {

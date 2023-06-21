@@ -2,12 +2,11 @@ import {
     Column,
     CreateDateColumn,
     Entity,
-    PrimaryGeneratedColumn,
-    UpdateDateColumn,
-    OneToOne,
+    Index,
     JoinColumn,
     ManyToOne,
-    Index,
+    PrimaryGeneratedColumn,
+    UpdateDateColumn,
 } from 'typeorm';
 import { Font } from '../../font/entities/font.entity';
 import { Response } from '../../response/entities/response.entity';

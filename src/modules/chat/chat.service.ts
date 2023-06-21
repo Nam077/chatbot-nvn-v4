@@ -24,6 +24,13 @@ import { Admin } from '../admin/entities/admin.entity';
 import { removeExtraSpaces } from '../../utils/string';
 import { Response } from '../response/entities/response.entity';
 import { Font } from '../font/entities/font.entity';
+import { getTimeCurrent, TimeCurrent } from '../../utils/time';
+enum CacheKey {
+    FONT = 'FONT',
+    KEY = 'KEY',
+    FONT_CHUNK_STRING = 'FONT_CHUNK_STRING',
+    FONT_CHUNK = 'FONT_CHUNK',
+}
 export type ADMIN_COMMAND =
     | 'BAN'
     | 'UNBAN'
@@ -113,7 +120,7 @@ export class ChatService {
             await this.fontService.createMultiple(createFontDtos, true);
             await this.responseService.createMultiple(responseCreateDtos, true);
             await this.updateKeyCache();
-            await this.updateFontChunkCache();
+            await this.updateFontChunkStringCache();
             return 'Update data successfully!';
         } catch (e) {
             throw new HttpException('Có lỗi xảy ra', HttpStatus.BAD_REQUEST);
@@ -135,30 +142,30 @@ export class ChatService {
     }
 
     async getKeys(): Promise<Key[]> {
-        const keys = await this.cacheManager.get<Key[]>('keys');
+        const keys = await this.cacheManager.get<Key[]>(CacheKey.KEY);
         if (keys) {
             return keys;
         }
         return await this.updateKeyCache();
     }
 
-    async getFontChunk() {
-        const fontChunk = await this.cacheManager.get('fontChunk');
+    async getFontChunkString() {
+        const fontChunk = await this.cacheManager.get(CacheKey.FONT_CHUNK_STRING);
         if (fontChunk) {
             return fontChunk;
         }
-        return await this.updateFontChunkCache();
+        return await this.updateFontChunkStringCache();
     }
 
-    async updateFontChunkCache() {
+    async updateFontChunkStringCache() {
         const fontChunkFromDb = await this.fontService.findChunkGetString();
-        await this.cacheManager.set('fontChunk', fontChunkFromDb, 100000);
+        await this.cacheManager.set(CacheKey.FONT_CHUNK_STRING, fontChunkFromDb, 24 * 60 * 60 * 1000);
         return fontChunkFromDb;
     }
 
     async updateKeyCache() {
         const keysFromDb = await this.keyService.findAll();
-        await this.cacheManager.set('keys', keysFromDb, 100000);
+        await this.cacheManager.set(CacheKey.KEY, keysFromDb, 24 * 60 * 60 * 1000);
         return keysFromDb;
     }
 
@@ -277,7 +284,7 @@ export class ChatService {
 
     async updateData() {
         await this.updateKeyCache();
-        await this.updateFontChunkCache();
+        await this.updateFontChunkStringCache();
         return {
             command: 'UPDATE_DATA',
             message: 'Update data successfully!',
@@ -480,5 +487,63 @@ export class ChatService {
             fonts,
             responses,
         };
+    }
+    async checkBanByTime(senderPsid: string): Promise<{
+        ban?: Ban;
+        isBanned: boolean;
+    }> {
+        const ban: Ban = await this.banService.findOneBySenderPsid(senderPsid);
+        if (!ban) {
+            return {
+                isBanned: false,
+            };
+        }
+        const { hour }: TimeCurrent = getTimeCurrent();
+        if (await this.getBanStatus()) {
+            if (hour >= 22 || hour < 6) {
+                const newBan = await this.banService.ban({
+                    senderPsid: senderPsid,
+                    reason: 'Nhắn tin ngoài giờ cho phép',
+                    name: senderPsid,
+                });
+            }
+            return {
+                ban,
+                isBanned: true,
+            };
+        } else {
+            return {
+                ban,
+                isBanned: true,
+            };
+        }
+    }
+
+    async getBanStatus() {
+        const value = await this.cacheManager.get('ban_status');
+        if (value) {
+            return value;
+        }
+        return this.updateBanStatus();
+    }
+
+    private updateBanStatus() {
+        const banStatus = this.settingService.getValuesByKey('ban_status', 'boolean');
+        this.cacheManager.set('ban_status', banStatus);
+        return banStatus;
+    }
+
+    async getFontChunk(chunk = 10) {
+        const fontChunk = await this.cacheManager.get(CacheKey.FONT_CHUNK);
+        if (fontChunk) {
+            return fontChunk;
+        }
+        return await this.updateFontChunkCache(chunk);
+    }
+
+    private async updateFontChunkCache(chunk: number) {
+        const fontChunk = await this.fontService.findChunk(chunk);
+        await this.cacheManager.set(CacheKey.FONT_CHUNK, fontChunk, 24 * 60 * 60 * 1000);
+        return fontChunk;
     }
 }

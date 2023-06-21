@@ -10,7 +10,7 @@ export type TimeCurrent = {
     dateTime: string;
 };
 
-export const getTimeCurrent = (timezone: string): TimeCurrent => {
+export const getTimeCurrent = (timezone = 'Asia/Ho_Chi_Minh'): TimeCurrent => {
     const date = moment().tz(timezone);
     return {
         date: date.format('YYYY-MM-DD'),
