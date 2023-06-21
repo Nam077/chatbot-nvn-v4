@@ -240,7 +240,7 @@ export class CrawlerService {
 
     public async getYoutube(message: string): Promise<CrawDataYoutube[]> {
         const dataCrawler: CrawDataYoutube[] = [];
-        const videos = await yt.search(message.replace('@ytb', ''));
+        const videos = await yt.search(message.replace('@yt', ''));
         if (videos.length > 0 && videos.length >= 10) {
             for (let i = 0; i < 10; i++) {
                 const video = videos[i];

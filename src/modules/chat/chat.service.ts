@@ -12,7 +12,7 @@ import { Link } from '../link/entities/link.entity';
 import { Message } from '../message/entities/message.entity';
 import { Tag } from '../tag/entities/tag.entity';
 import { Image } from '../image/entities/image.entity';
-import { CrawlerService } from './crawler/crawler.service';
+import { CrawDataGoogle, CrawDataLucky, CrawDataYoutube, CrawlerService } from './crawler/crawler.service';
 import { Cache } from 'cache-manager';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { BanService } from '../ban/ban.service';
@@ -22,6 +22,8 @@ import { SettingService } from '../setting/setting.service';
 import { AdminService } from '../admin/admin.service';
 import { Admin } from '../admin/entities/admin.entity';
 import { removeExtraSpaces } from '../../utils/string';
+import { Response } from '../response/entities/response.entity';
+import { Font } from '../font/entities/font.entity';
 export type ADMIN_COMMAND =
     | 'BAN'
     | 'UNBAN'
@@ -118,12 +120,22 @@ export class ChatService {
         }
     }
 
-    async crawlerFromGoogleSearch(key: string) {
+    async crawlerFromGoogleSearch(key: string): Promise<CrawDataGoogle[]> {
         return await this.crawlerService.crawlerFromGoogleSearch(key);
     }
+    async getYouTubeSearch(key: string): Promise<CrawDataYoutube[]> {
+        return await this.crawlerService.getYoutube(key);
+    }
 
-    async getKeys() {
-        const keys = await this.cacheManager.get('keys');
+    async getXSMB(): Promise<string> {
+        return await this.crawlerService.crawlerXSMB();
+    }
+    getLuckyNumber(str: string): CrawDataLucky {
+        return this.crawlerService.getLuckyNumber(str);
+    }
+
+    async getKeys(): Promise<Key[]> {
+        const keys = await this.cacheManager.get<Key[]>('keys');
         if (keys) {
             return keys;
         }
@@ -449,5 +461,24 @@ export class ChatService {
             default:
                 return { error: 'Invalid command.' };
         }
+    }
+
+    async getDataFromMessage(message: string): Promise<{
+        fonts: Font[];
+        responses: Response[];
+    }> {
+        const keys: Key[] = await this.getKeys();
+        const fonts: Font[] = [];
+        const responses: Response[] = [];
+        keys.forEach((key: Key) => {
+            if (message.toLowerCase().includes(key.value)) {
+                fonts.push(key.font);
+                responses.push(key.response);
+            }
+        });
+        return {
+            fonts,
+            responses,
+        };
     }
 }
