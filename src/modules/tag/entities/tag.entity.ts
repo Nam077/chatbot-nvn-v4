@@ -9,6 +9,6 @@ export class Tag {
     @Column({ type: 'varchar', length: 255, nullable: false, comment: 'Name of the tag' })
     name: string;
 
-    @ManyToMany(() => Font, (font) => font.tags)
+    @ManyToMany(() => Font, (font) => font.tags, { onDelete: 'CASCADE', cascade: true })
     fonts: Font[];
 }

@@ -9,6 +9,6 @@ export class ChatController {
 
     @Get('/test')
     test() {
-        return this.chatService.test();
+        return this.chatService.updateDataFromGoogleSheet();
     }
 }

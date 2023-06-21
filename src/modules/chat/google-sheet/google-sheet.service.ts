@@ -196,8 +196,8 @@ export class GoogleSheetService {
     private getResponses(rowsResponse: GoogleSpreadsheetRow[]): ResponseExcel[] {
         const responses: ResponseExcel[] = [];
 
-        rowsResponse.forEach((rowResponse: GoogleSpreadsheetRow) => {
-            const response: ResponseExcel = this.getDataRowResponse(rowResponse);
+        rowsResponse.forEach((rowResponse: GoogleSpreadsheetRow, index) => {
+            const response: ResponseExcel = this.getDataRowResponse(rowResponse, index);
             responses.push(response);
             response.keys.forEach((key: KeyI) => {
                 const value: string = key.value;
@@ -255,8 +255,8 @@ export class GoogleSheetService {
         };
     }
 
-    private getDataRowResponse(rowResponse: GoogleSpreadsheetRow): ResponseExcel {
-        const name: string = this.removeExtraSpaces((rowResponse.Name ?? '') === '' ? 'Default' : rowResponse.Name);
+    private getDataRowResponse(rowResponse: GoogleSpreadsheetRow, index: number): ResponseExcel {
+        const name = `Response ${index + 1}`;
         return {
             name,
             ...this.getDataFromRow(rowResponse),

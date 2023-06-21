@@ -39,9 +39,9 @@ export class Image {
     })
     updatedAt: Date;
 
-    @ManyToMany(() => Font, (font) => font.images)
+    @ManyToMany(() => Font, (font) => font.images, { onDelete: 'CASCADE', cascade: true })
     fonts: Font[];
 
-    @ManyToMany(() => Response, (response) => response.images)
+    @ManyToMany(() => Response, (response) => response.images, { onDelete: 'CASCADE', cascade: true })
     responses: Response[];
 }

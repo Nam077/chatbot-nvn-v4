@@ -48,6 +48,6 @@ export class Link {
     })
     updatedAt: Date;
 
-    @ManyToMany(() => Font, (font) => font.links)
+    @ManyToMany(() => Font, (font) => font.links, { onDelete: 'CASCADE', cascade: true })
     fonts: Font[];
 }

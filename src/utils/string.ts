@@ -1,5 +1,6 @@
 import { UserInformation } from '../modules/messenger/models/bot-messenger';
 import { TimeCurrent } from './time';
+import slugify from 'slugify';
 
 export const validateMessage = (message: string, userProfile: UserInformation, date: TimeCurrent): string => {
     const { firstName, lastName, name, profilePic } = userProfile;
@@ -17,4 +18,19 @@ export const validateMessage = (message: string, userProfile: UserInformation, d
         .replaceAll('{{month}}', month.toString())
         .replaceAll('{{year}}', year.toString())
         .replaceAll('{{dateTime}}', dateTime);
+};
+
+export const removeAllSpecialCharacters = (str: string): string => {
+    return str.replace(/[^\p{L}\d\s]/gu, '').trim();
+};
+export const removeExtraSpaces = (str: string): string => {
+    return str.trim().replace(/\s+/g, ' ');
+};
+
+export const slugifyString = (str: string): string => {
+    return slugify(str.trim(), {
+        lower: true,
+        strict: true,
+        replacement: '-',
+    });
 };

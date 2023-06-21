@@ -2,13 +2,11 @@ import {
     Column,
     CreateDateColumn,
     Entity,
+    JoinTable,
+    ManyToMany,
+    OneToMany,
     PrimaryGeneratedColumn,
     UpdateDateColumn,
-    OneToOne,
-    JoinColumn,
-    OneToMany,
-    ManyToMany,
-    JoinTable,
 } from 'typeorm';
 import { Key } from '../../key/entities/key.entity';
 import { Message } from '../../message/entities/message.entity';
@@ -70,7 +68,7 @@ export class Response {
     })
     messages: Message[];
 
-    @ManyToMany(() => Image, (image) => image.fonts)
+    @ManyToMany(() => Image, (image) => image.fonts) //
     @JoinTable({
         name: 'response_images',
         joinColumn: {

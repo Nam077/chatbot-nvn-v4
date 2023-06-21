@@ -7,6 +7,7 @@ import {
     OneToOne,
     JoinColumn,
     ManyToOne,
+    Index,
 } from 'typeorm';
 import { Font } from '../../font/entities/font.entity';
 import { Response } from '../../response/entities/response.entity';
@@ -30,8 +31,8 @@ export class Key {
     })
     name: string;
 
-    @Column({
-        name: 'value',
+    @Index({
+        unique: true,
     })
     @Column({
         name: 'value',

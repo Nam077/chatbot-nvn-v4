@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, UpdateDateColumn, CreateDateColumn, ManyToMany } from 'typeorm';
+import { Column, CreateDateColumn, Entity, ManyToMany, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
 import { Font } from '../../font/entities/font.entity';
 import { Response } from '../../response/entities/response.entity';
 
@@ -39,8 +39,8 @@ export class Message {
     })
     updatedAt: Date;
 
-    @ManyToMany(() => Font, (font) => font.messages)
+    @ManyToMany(() => Font, (font) => font.messages, { onDelete: 'CASCADE', cascade: true })
     fonts: Font[];
-    @ManyToMany(() => Response, (response) => response.messages)
+    @ManyToMany(() => Response, (response) => response.messages, { onDelete: 'CASCADE', cascade: true })
     responses: Response[];
 }
