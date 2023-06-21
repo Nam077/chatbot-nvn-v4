@@ -1,6 +1,7 @@
-import { Entity, ManyToMany, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import { Column, CreateDateColumn, Entity, ManyToMany, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
 import { Font } from '../../font/entities/font.entity';
 import { Response } from '../../response/entities/response.entity';
+
 @Entity({ name: 'images' })
 export class Image {
     @PrimaryGeneratedColumn({

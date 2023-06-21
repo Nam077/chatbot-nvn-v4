@@ -1,14 +1,13 @@
 import {
-    Entity,
-    PrimaryGeneratedColumn,
     Column,
     CreateDateColumn,
-    UpdateDateColumn,
+    Entity,
     Index,
-    ManyToMany,
-    OneToOne,
-    OneToMany,
     JoinTable,
+    ManyToMany,
+    OneToMany,
+    PrimaryGeneratedColumn,
+    UpdateDateColumn,
 } from 'typeorm';
 import { Key } from '../../key/entities/key.entity';
 import { Link } from '../../link/entities/link.entity';

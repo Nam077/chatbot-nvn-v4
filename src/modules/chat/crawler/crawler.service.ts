@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import * as yt from 'youtube-search-without-api-key';
 import * as cheerio from 'cheerio';
+
 export interface CrawDataGoogle {
     type: string;
     data: string | string[];

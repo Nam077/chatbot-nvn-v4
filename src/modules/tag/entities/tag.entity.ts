@@ -1,4 +1,4 @@
-import { Column, Entity, JoinColumn, ManyToMany, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, ManyToMany, PrimaryGeneratedColumn } from 'typeorm';
 import { Font } from '../../font/entities/font.entity';
 
 @Entity({ name: 'tags', synchronize: true, orderBy: { id: 'ASC' } })

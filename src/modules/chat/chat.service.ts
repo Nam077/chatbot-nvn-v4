@@ -25,6 +25,7 @@ import { removeExtraSpaces } from '../../utils/string';
 import { Response } from '../response/entities/response.entity';
 import { Font } from '../font/entities/font.entity';
 import { getTimeCurrent, TimeCurrent } from '../../utils/time';
+
 enum CacheKey {
     FONT = 'FONT',
     KEY = 'KEY',

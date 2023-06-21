@@ -1,6 +1,7 @@
 import { IsString } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-import { RemoveExtraSpaces, Lowercase } from '../../../decorators/custom-validator.decorator';
+import { Lowercase, RemoveExtraSpaces } from '../../../decorators/custom-validator.decorator';
+
 export class CreateTagDto {
     @ApiProperty({
         example: 'NestJS',
