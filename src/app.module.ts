@@ -17,9 +17,11 @@ import { AdminModule } from './modules/admin/admin.module';
 import { MessageModule } from './modules/message/message.module';
 import { TagModule } from './modules/tag/tag.module';
 import { FontChunkModule } from './modules/font-chunk/font-chunk.module';
+import { CacheModule } from '@nestjs/cache-manager';
 
 @Module({
     imports: [
+        CacheModule.register({ isGlobal: true }),
         ConfigModule.forRoot({
             isGlobal: true,
             envFilePath: `.env.${process.env.NODE_ENV}`,

@@ -11,6 +11,8 @@ import { ResponseModule } from '../response/response.module';
 import { TagModule } from '../tag/tag.module';
 import { ImageModule } from '../image/image.module';
 import { CrawlerService } from './crawler/crawler.service';
+import { HttpModule } from '@nestjs/axios';
+import { BanModule } from '../ban/ban.module';
 
 @Module({
     imports: [
@@ -22,6 +24,8 @@ import { CrawlerService } from './crawler/crawler.service';
         ResponseModule,
         TagModule,
         ImageModule,
+        HttpModule,
+        BanModule,
     ],
     controllers: [ChatController],
     providers: [ChatService, GoogleSheetService, CrawlerService],

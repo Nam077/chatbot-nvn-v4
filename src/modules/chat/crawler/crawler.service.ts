@@ -30,16 +30,16 @@ export class CrawlerService {
     };
 
     constructor(private readonly httpService: HttpService) {}
-    public getCrawler = async (message: string): Promise<CrawDataGoogle[]> => {
+    public crawlerFromGoogleSearch = async (key: string): Promise<CrawDataGoogle[]> => {
         const dataCrawler: CrawDataGoogle[] = [];
         try {
             //replace all space in message
-            let messageCheck = message.replace(/\s/g, '');
+            let messageCheck = key.replace(/\s/g, '');
             messageCheck = this.stripAccent(messageCheck);
             if (messageCheck.includes('cov' || 'covid' || 'corona' || 'cô vi' || 'corona')) {
                 return;
             }
-            const encodedString = encodeURI(message);
+            const encodedString = encodeURI(key);
             const url = `https://www.google.com.vn/search?q=${encodedString}&hl=vi&gl=VN`;
             const response = await this.httpService
                 .get(url, {

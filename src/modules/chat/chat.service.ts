@@ -1,6 +1,4 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { CreateChatDto } from './dto/create-chat.dto';
-import { UpdateChatDto } from './dto/update-chat.dto';
+import { HttpException, HttpStatus, Inject, Injectable } from '@nestjs/common';
 import { DataSheet, GoogleSheetService } from './google-sheet/google-sheet.service';
 import { KeyService } from '../key/key.service';
 import { MessageService } from '../message/message.service';
@@ -10,13 +8,14 @@ import { ResponseService } from '../response/response.service';
 import { Key } from '../key/entities/key.entity';
 import { TagService } from '../tag/tag.service';
 import { ImageService } from '../image/image.service';
-import { CreateFontDto } from '../font/dto/create-font.dto';
-import { CreateResponseDto } from '../response/dto/create-response.dto';
 import { Link } from '../link/entities/link.entity';
 import { Message } from '../message/entities/message.entity';
 import { Tag } from '../tag/entities/tag.entity';
 import { Image } from '../image/entities/image.entity';
 import { CrawlerService } from './crawler/crawler.service';
+import { Cache } from 'cache-manager';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { BanService } from '../ban/ban.service';
 
 @Injectable()
 export class ChatService {
@@ -30,6 +29,8 @@ export class ChatService {
         private readonly tagService: TagService,
         private readonly imageService: ImageService,
         private readonly crawlerService: CrawlerService,
+        private readonly banService: BanService,
+        @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
     ) {}
 
     async updateDataFromGoogleSheet() {
@@ -79,9 +80,47 @@ export class ChatService {
             });
             await this.fontService.createMultiple(createFontDtos, true);
             await this.responseService.createMultiple(responseCreateDtos, true);
+            await this.updateKeyCache();
+            await this.updateFontChunkCache();
             return 'Update data successfully!';
         } catch (e) {
             throw new HttpException('Có lỗi xảy ra', HttpStatus.BAD_REQUEST);
         }
+    }
+
+    async crawlerFromGoogleSearch(key: string) {
+        return await this.crawlerService.crawlerFromGoogleSearch(key);
+    }
+
+    async getKeys() {
+        const keys = await this.cacheManager.get('keys');
+        if (keys) {
+            return keys;
+        }
+        return await this.updateKeyCache();
+    }
+
+    async getFontChunk() {
+        const fontChunk = await this.cacheManager.get('fontChunk');
+        if (fontChunk) {
+            return fontChunk;
+        }
+        return await this.updateFontChunkCache();
+    }
+
+    async updateFontChunkCache() {
+        const fontChunkFromDb = await this.fontService.findChunkGetString();
+        await this.cacheManager.set('fontChunk', fontChunkFromDb, 100000);
+        return fontChunkFromDb;
+    }
+
+    async updateKeyCache() {
+        const keysFromDb = await this.keyService.findAll();
+        await this.cacheManager.set('keys', keysFromDb, 100000);
+        return keysFromDb;
+    }
+
+    async getBanner() {
+        return await this.banService.getBanList();
     }
 }

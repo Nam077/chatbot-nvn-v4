@@ -48,7 +48,12 @@ export class KeyService {
     }
 
     async findAll() {
-        return await this.keyRepository.find();
+        return await this.keyRepository.find({
+            relations: {
+                font: { images: true, links: true, keys: true, messages: true, tags: true },
+                response: { images: true, keys: true, messages: true },
+            },
+        });
     }
 
     async findOne(id: number) {

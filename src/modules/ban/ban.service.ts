@@ -27,6 +27,7 @@ export class BanService {
         }
         return true;
     }
+
     async create(createBanDto: CreateBanDto) {
         const { senderPsid, name, reason = 'Người dùng vi phạm chính sách của trang' } = createBanDto;
         if (await this.checkExistBySenderPsid(senderPsid)) {
@@ -50,6 +51,7 @@ export class BanService {
             statusCode: HttpStatus.CREATED,
         };
     }
+
     async findAll() {
         return this.banRepository.find();
     }
@@ -117,6 +119,7 @@ export class BanService {
         }
         return true;
     }
+
     async removeBySenderPsid(senderPsid: string) {
         const ban = await this.findOneBySenderPsid(senderPsid);
         if (!ban) {
@@ -135,6 +138,7 @@ export class BanService {
             statusCode: HttpStatus.OK,
         };
     }
+
     async unban(senderPsid: string): Promise<ResponseLocal<Ban>> {
         const ban = await this.findOneBySenderPsid(senderPsid);
         if (!ban) {
@@ -158,6 +162,7 @@ export class BanService {
             message: 'Unban all successfully',
         };
     }
+
     async checkIsBanned(senderPsid: string): Promise<ResponseLocal<Ban>> {
         const ban = await this.findOneBySenderPsid(senderPsid);
         if (!ban) {
@@ -171,5 +176,13 @@ export class BanService {
             message: 'User is banned',
             data: ban,
         };
+    }
+
+    async getBanList(): Promise<string[]> {
+        const bans = await this.findAll();
+        if (!bans.length) {
+            return ['Không có người dùng nào bị cấm'];
+        }
+        return bans.map((ban) => `Tên: ${ban.name} - PSID: ${ban.senderPsid} - Lý do: ${ban.reason}\n\n`);
     }
 }

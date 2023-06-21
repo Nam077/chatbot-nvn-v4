@@ -99,13 +99,9 @@ export class LinkService {
     }
 
     async findOrCreateMultipleLinks(urls: string[]): Promise<Link[]> {
-        const links: Link[] = await this.linkRepository.find({
-            where: {
-                url: In(urls),
-            },
-        });
+        const links: Record<string, Link> = await this.findLinksByUrls(urls);
         const newUrls: string[] = urls.filter((url) => !links[url]);
         const savedLinks: Link[] = await this.linkRepository.save(newUrls.map((url) => ({ url })));
-        return [...links, ...savedLinks];
+        return [...Object.values(links), ...savedLinks];
     }
 }
