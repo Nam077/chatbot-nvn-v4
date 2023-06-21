@@ -21,6 +21,7 @@ import { Ban } from '../ban/entities/ban.entity';
 import { SettingService } from '../setting/setting.service';
 import { AdminService } from '../admin/admin.service';
 import { Admin } from '../admin/entities/admin.entity';
+import { removeExtraSpaces } from '../../utils/string';
 export type ADMIN_COMMAND =
     | 'BAN'
     | 'UNBAN'
@@ -162,11 +163,11 @@ export class ChatService {
         };
     }
 
-    async banUser(targetUserId: string): Promise<AdminCommand> {
+    async banUser(targetUserId: string, reason = `Admin ban`): Promise<AdminCommand> {
         const response: ResponseLocal<Ban> = await this.banService.ban({
             name: targetUserId,
             senderPsid: targetUserId,
-            reason: 'Admin ban',
+            reason: reason,
         });
         if (response.isSuccess) {
             return {
@@ -232,6 +233,14 @@ export class ChatService {
         return {
             command: 'ENABLE_MULTIPLE_DOWNLOAD',
             message: 'Enable multiple download successfully!',
+            isSuccessful: true,
+        };
+    }
+    private async disableMultipleDownload() {
+        await this.settingService.updateSetting('MULTIPLE_DOWNLOAD', 'false');
+        return {
+            command: 'DISABLE_MULTIPLE_DOWNLOAD',
+            message: 'Disable multiple download successfully!',
             isSuccessful: true,
         };
     }
@@ -326,70 +335,119 @@ export class ChatService {
     }
 
     async adminFunctions(message: string) {
-        // ban user @ban <user_id>
-        // unban user @unban <user_id>
-        // unban all @unban all
-        // show ban list @ban list
-        // on ban @ban on
-        // off ban @ban off
-        // on multiple download @multiple on
-        // on bot @bot on
-        // off bot @bot off
-        // update data @update
-        // add admin @admin add <user_id>
-        // remove admin @admin remove <user_id>
-        // show admin list @admin list
-        // update page access token @token <token>
-        // show page access token @token show
-        const args = message.split(' ');
-        const command = args[0].toLowerCase();
-        const targetUserId = args[1];
+        const args = removeExtraSpaces(message).trim().split(' ');
+        const command = args[0];
+        if (args.length < 2) {
+            return { error: 'Missing ban option for ban command.' };
+        }
+        switch (command) {
+            case '@ban':
+                const banOption = args[1];
+                // Xử lý chức năng ban user
+                if (banOption === 'list') {
+                    // Lấy danh sách ban @ban list
+                    return await this.getBanList();
+                } else if (banOption === 'on') {
+                    // Bật chế độ ban @ban on
+                    return await this.enableBanFunction();
+                } else if (banOption === 'off') {
+                    // Tắt chế độ ban @ban off
+                    return await this.disableBanFunction();
+                } else {
+                    //@ban  @ban <user_id>  or <user_id> <reason>
+                    if (args.length > 2) {
+                        const userId = args[1];
+                        const reason = args[2];
+                        return await this.banUser(userId, reason);
+                    } else {
+                        const userId = args[1];
+                        // Ban user theo userId @ban <user_id>
+                        return await this.banUser(userId);
+                    }
+                }
+                break;
 
-        if (command === '@ban') {
-            if (targetUserId === 'all') {
-                return this.unbanAllUsers();
-            } else {
-                return this.banUser(targetUserId);
-            }
-        } else if (command === '@unban') {
-            if (targetUserId === 'all') {
-                return this.unbanAllUsers();
-            } else {
-                return this.unbanUser(targetUserId);
-            }
-        } else if (command === '@banlist') {
-            return this.getBanList();
-        } else if (command === '@banon') {
-            return this.enableBanFunction();
-        } else if (command === '@banoff') {
-            return this.disableBanFunction();
-        } else if (command === '@multipleon') {
-            return this.enableMultipleDownload();
-        } else if (command === '@bot') {
-            if (targetUserId === 'on') {
-                return this.enableBot();
-            } else if (targetUserId === 'off') {
-                return this.disableBot();
-            } else {
-                console.log('Unknown command');
-                return;
-            }
-        } else if (command === '@update') {
-            return this.updateData();
-        } else if (command === '@adminadd') {
-            return this.addAdmin(targetUserId);
-        } else if (command === '@adminremove') {
-            return this.removeAdmin(targetUserId);
-        } else if (command === '@adminlist') {
-            return this.showAdminList();
-        } else if (command === '@token') {
-            if (targetUserId === 'show') {
-                return this.showPageAccessToken();
-            } else {
-                return this.updatePageAccessToken(targetUserId);
-            }
-        } else {
-            console.log('Unknown command');
+            case '@unban':
+                const unbanOption = args[1];
+                if (unbanOption === 'all') {
+                    return await this.unbanAllUsers();
+                } else {
+                    const userId = args[1];
+                    return await this.unbanUser(userId);
+                }
+                break;
+            case '@multiple':
+                if (args.length < 2) {
+                    return { error: 'Missing option for multiple command.' };
+                }
+                const multipleOption = args[1];
+                if (multipleOption === 'on') {
+                    // Bật multiple download @multiple on
+                    return await this.enableMultipleDownload();
+                } else if (multipleOption === 'off') {
+                    // Tắt multiple download @multiple off
+                    return await this.disableMultipleDownload();
+                }
+                break;
+
+            case '@bot':
+                const botOption = args[1];
+                if (botOption === 'on') {
+                    // Bật bot @bot on
+                    return await this.enableBot();
+                } else if (botOption === 'off') {
+                    return await this.disableBot();
+                }
+                break;
+
+            case '@admin':
+                const adminOption = args[1];
+                if (adminOption === 'add') {
+                    if (args.length < 3) {
+                        return { error: 'Missing user ID for adding admin.' };
+                    }
+                    const adminUserId = args[2];
+                    // Thêm admin với adminUserId @admin add <user_id>
+                    await this.addAdmin(adminUserId);
+                } else if (adminOption === 'remove') {
+                    if (args.length < 3) {
+                        return { error: 'Missing user ID for removing admin.' };
+                    }
+                    const adminUserId = args[2];
+                    // Xóa admin với adminUserId @admin remove <user_id>
+                    await this.removeAdmin(adminUserId);
+                } else if (adminOption === 'list') {
+                    // Lấy danh sách admin
+                    return await this.showAdminList();
+                }
+                break;
+
+            case '@token':
+                const tokenOption = args[1];
+                if (tokenOption === 'show') {
+                    // Hiển thị page access token
+                    return await this.showPageAccessToken();
+                } else if (tokenOption === 'update') {
+                    if (args.length < 3) {
+                        return { error: 'Missing new token for updating access token.' };
+                    }
+                    const newToken = args[2];
+                    // Cập nhật page access token với newToken @token update <new_token>
+                    return await this.updatePageAccessToken(newToken);
+                }
+                break;
+
+            case '@update':
+                await this.updateData();
+                return {
+                    command: 'UPDATE_DATA',
+                    message: 'Update data successfully!',
+                    isSuccessful: true,
+                };
+                break;
+
+            default:
+                return { error: 'Invalid command.' };
         }
     }
 }
