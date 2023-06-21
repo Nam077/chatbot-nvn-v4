@@ -13,6 +13,8 @@ import { ImageModule } from '../image/image.module';
 import { CrawlerService } from './crawler/crawler.service';
 import { HttpModule } from '@nestjs/axios';
 import { BanModule } from '../ban/ban.module';
+import { SettingModule } from '../setting/setting.module';
+import { AdminModule } from '../admin/admin.module';
 
 @Module({
     imports: [
@@ -26,6 +28,8 @@ import { BanModule } from '../ban/ban.module';
         ImageModule,
         HttpModule,
         BanModule,
+        SettingModule,
+        AdminModule,
     ],
     controllers: [ChatController],
     providers: [ChatService, GoogleSheetService, CrawlerService],

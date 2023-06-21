@@ -171,7 +171,7 @@ export class FontService {
         return savedFonts.reduce((acc, font) => ({ ...acc, [font.name]: font }), {});
     }
 
-    async findChunk(chunkSize = 20) {
+    async findChunk(chunkSize = 20): Promise<Font[][]> {
         const fonts = await this.findAll();
         const chunkedFonts: Font[][] = [];
         for (let i = 0; i < fonts.length; i += chunkSize) {
@@ -180,8 +180,8 @@ export class FontService {
         return chunkedFonts;
     }
 
-    async findChunkGetString(chunkSize = 20) {
+    async findChunkGetString(chunkSize = 20): Promise<string[][]> {
         const chunkedFonts = await this.findChunk(chunkSize);
-        return chunkedFonts.map((chunk) => chunk.map((font) => font.name).join('\n\n'));
+        return chunkedFonts.map((chunk) => chunk.map((font) => font.name));
     }
 }

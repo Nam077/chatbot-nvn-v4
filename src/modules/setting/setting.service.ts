@@ -167,9 +167,17 @@ export class SettingService {
         return (await this.getValuesByKey('API_VERSION', 'string')) as string;
     }
     async updatePageAccessToken(value: string): Promise<Setting> {
+        const setting = await this.getValuesByKey('PAGE_ACCESS_TOKEN', 'string');
         return await this.settingRepository.save({
             ...(await this.findOneByKey('PAGE_ACCESS_TOKEN')),
             value,
         });
     } //
+    async updateSetting(key: string, value: string, type: SettingType = 'string'): Promise<Setting> {
+        const setting = await this.getValuesByKey(key, type);
+        return await this.settingRepository.save({
+            ...(await this.findOneByKey(key)),
+            value,
+        });
+    }
 }

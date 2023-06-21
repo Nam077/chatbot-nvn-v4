@@ -4,6 +4,7 @@ import { UpdateAdminDto } from './dto/update-admin.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Admin } from './entities/admin.entity';
 import { Repository } from 'typeorm';
+import { ResponseLocal } from '../../interfaces/response-local';
 
 @Injectable()
 export class AdminService {
@@ -163,5 +164,60 @@ export class AdminService {
     async checkIsAdmin(senderPsid: string) {
         const admin = await this.findOneBySenderPsid(senderPsid);
         return !!admin;
+    }
+
+    async addAdmin(senderPsid: string): Promise<ResponseLocal<Admin>> {
+        const admin = await this.findOneBySenderPsid(senderPsid);
+        if (admin) {
+            return {
+                isSuccess: false,
+                message: 'User already is admin',
+            };
+        }
+        const newAdmin = new Admin();
+        newAdmin.senderPsid = senderPsid;
+        const result: Admin = await this.adminRepository.save(newAdmin);
+        return {
+            isSuccess: true,
+            message: 'Add admin successfully',
+            data: result,
+        };
+    }
+
+    async removeAdmin(senderPsid: string) {
+        const admin = await this.findOneBySenderPsid(senderPsid);
+        if (!admin) {
+            return {
+                isSuccess: false,
+                message: 'User is not admin',
+            };
+        }
+        await this.adminRepository.delete(admin.id);
+        return {
+            isSuccess: true,
+            message: 'Remove admin successfully',
+        };
+    }
+
+    async findAllChunk(chunk = 20): Promise<Admin[][]> {
+        const admins = await this.findAll();
+        const result: Admin[][] = [];
+        for (let i = 0; i < admins.length; i += chunk) {
+            result.push(admins.slice(i, i + chunk));
+        }
+        return result;
+    }
+
+    async getAdminList(chunk = 20): Promise<string[][]> {
+        const admins = await this.findAll();
+        const result: string[][] = [];
+        for (let i = 0; i < admins.length; i += chunk) {
+            const adminChunk = admins.slice(i, i + chunk);
+            const adminChunkString = adminChunk.map((admin) => {
+                return `${admin.name} - ${admin.senderPsid}`;
+            });
+            result.push(adminChunkString);
+        }
+        return result;
     }
 }

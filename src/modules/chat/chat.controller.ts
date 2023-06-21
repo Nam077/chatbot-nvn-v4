@@ -9,7 +9,7 @@ export class ChatController {
 
     @Get('/test')
     test(@Query('key') key: string) {
-        return this.chatService.getKeys();
+        return this.chatService.getBanList();
     }
     @Get('/test2')
     test2(@Query('key') key: string) {

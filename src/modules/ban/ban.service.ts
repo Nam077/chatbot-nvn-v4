@@ -178,11 +178,40 @@ export class BanService {
         };
     }
 
-    async getBanList(): Promise<string[]> {
+    async getBanList(chunk = 20): Promise<string[][]> {
         const bans = await this.findAll();
         if (!bans.length) {
-            return ['Không có người dùng nào bị cấm'];
+            return [['Không có người dùng nào bị cấm']];
         }
-        return bans.map((ban) => `Tên: ${ban.name} - PSID: ${ban.senderPsid} - Lý do: ${ban.reason}\n\n`);
+        const banList = [];
+        for (let i = 0; i < bans.length; i += chunk) {
+            const currentChunk = bans.slice(i, i + chunk);
+            const banInfo = currentChunk.map(
+                (ban) => `Tên: ${ban.name} - PSID: ${ban.senderPsid} - Lý do: ${ban.reason}`,
+            );
+
+            banList.push(banInfo);
+        }
+        return banList;
+    }
+
+    async ban(createBanDto: CreateBanDto): Promise<ResponseLocal<Ban>> {
+        const { senderPsid, name, reason = 'Người dùng vi phạm chính sách của trang' } = createBanDto;
+        if (await this.checkExistBySenderPsid(senderPsid)) {
+            return {
+                isSuccess: false,
+                message: 'Sender PSID already exists',
+            };
+        }
+        const ban = new Ban();
+        ban.senderPsid = senderPsid;
+        ban.name = name;
+        ban.reason = reason;
+        const result: Ban = await this.banRepository.save(ban);
+        return {
+            isSuccess: true,
+            message: 'Ban successfully',
+            data: result,
+        };
     }
 }

@@ -8,6 +8,7 @@ import { MessageModule } from '../message/message.module';
 import { LinkModule } from '../link/link.module';
 import { TagModule } from '../tag/tag.module';
 import { ImageModule } from '../image/image.module';
+import { SettingService } from '../setting/setting.service';
 
 @Module({
     imports: [TypeOrmModule.forFeature([Font]), KeyModule, ImageModule, MessageModule, LinkModule, TagModule],

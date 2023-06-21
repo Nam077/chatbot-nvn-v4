@@ -16,7 +16,34 @@ import { CrawlerService } from './crawler/crawler.service';
 import { Cache } from 'cache-manager';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { BanService } from '../ban/ban.service';
-
+import { ResponseLocal } from '../../interfaces/response-local';
+import { Ban } from '../ban/entities/ban.entity';
+import { SettingService } from '../setting/setting.service';
+import { AdminService } from '../admin/admin.service';
+import { Admin } from '../admin/entities/admin.entity';
+export type ADMIN_COMMAND =
+    | 'BAN'
+    | 'UNBAN'
+    | 'UNBAN_ALL'
+    | 'BAN_LIST'
+    | 'ON_BAN'
+    | 'OFF_BAN'
+    | 'ON_MULTIPLE_DOWNLOAD'
+    | 'ON_BOT'
+    | 'OFF_BOT'
+    | 'UPDATE_DATA'
+    | 'ADD_ADMIN'
+    | 'REMOVE_ADMIN'
+    | 'ADMIN_LIST'
+    | 'UPDATE_PAGE_ACCESS_TOKEN'
+    | 'SHOW_PAGE_ACCESS_TOKEN';
+export interface AdminCommand {
+    command: ADMIN_COMMAND;
+    message: string;
+    isSuccessful: boolean;
+    error?: string;
+    data?: any;
+}
 @Injectable()
 export class ChatService {
     constructor(
@@ -30,6 +57,8 @@ export class ChatService {
         private readonly imageService: ImageService,
         private readonly crawlerService: CrawlerService,
         private readonly banService: BanService,
+        private readonly settingService: SettingService,
+        private readonly adminService: AdminService,
         @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
     ) {}
 
@@ -122,5 +151,245 @@ export class ChatService {
 
     async getBanner() {
         return await this.banService.getBanList();
+    }
+
+    async unbanAllUsers(): Promise<AdminCommand> {
+        await this.banService.unbanAll();
+        return {
+            command: 'UNBAN_ALL',
+            message: 'Unban all users successfully!',
+            isSuccessful: true,
+        };
+    }
+
+    async banUser(targetUserId: string): Promise<AdminCommand> {
+        const response: ResponseLocal<Ban> = await this.banService.ban({
+            name: targetUserId,
+            senderPsid: targetUserId,
+            reason: 'Admin ban',
+        });
+        if (response.isSuccess) {
+            return {
+                command: 'BAN',
+                message: `Ban user ${targetUserId} successfully!`,
+                isSuccessful: true,
+                data: response.data,
+            };
+        }
+        return {
+            command: 'BAN',
+            message: response.message,
+            isSuccessful: false,
+        };
+    }
+
+    async unbanUser(targetUserId: any) {
+        const response: ResponseLocal<Ban> = await this.banService.unban(targetUserId);
+        if (response.isSuccess) {
+            return {
+                command: 'UNBAN',
+                message: `Unban user ${targetUserId} successfully!`,
+                isSuccessful: true,
+                data: response.data,
+            };
+        }
+        return {
+            command: 'UNBAN',
+            message: response.message,
+            isSuccessful: false,
+        };
+    }
+
+    async getBanList() {
+        return {
+            command: 'BAN_LIST',
+            message: 'Get ban list successfully!',
+            isSuccessful: true,
+            data: await this.banService.getBanList(),
+        };
+    }
+
+    async enableBanFunction() {
+        await this.settingService.updateSetting('BAN', 'true');
+        return {
+            command: 'ENABLE_BAN',
+            message: 'Enable ban function successfully!',
+            isSuccessful: true,
+        };
+    }
+
+    async disableBanFunction() {
+        await this.settingService.updateSetting('BAN', 'false');
+        return {
+            command: 'DISABLE_BAN',
+            message: 'Disable ban function successfully!',
+            isSuccessful: true,
+        };
+    }
+
+    async enableMultipleDownload() {
+        await this.settingService.updateSetting('MULTIPLE_DOWNLOAD', 'true');
+        return {
+            command: 'ENABLE_MULTIPLE_DOWNLOAD',
+            message: 'Enable multiple download successfully!',
+            isSuccessful: true,
+        };
+    }
+
+    async enableBot() {
+        await this.settingService.updateSetting('BOT', 'true');
+        return {
+            command: 'ENABLE_BOT',
+            message: 'Enable bot successfully!',
+            isSuccessful: true,
+        };
+    }
+
+    async disableBot() {
+        await this.settingService.updateSetting('BOT', 'false');
+        return {
+            command: 'DISABLE_BOT',
+            message: 'Disable bot successfully!',
+            isSuccessful: true,
+        };
+    }
+
+    async updateData() {
+        await this.updateKeyCache();
+        await this.updateFontChunkCache();
+        return {
+            command: 'UPDATE_DATA',
+            message: 'Update data successfully!',
+            isSuccessful: true,
+        };
+    }
+
+    async addAdmin(targetUserId: any) {
+        const response: ResponseLocal<Admin> = await this.adminService.addAdmin(targetUserId);
+        if (response.isSuccess) {
+            return {
+                command: 'ADD_ADMIN',
+                message: `Add admin ${targetUserId} successfully!`,
+                isSuccessful: true,
+                data: response.data,
+            };
+        }
+        return {
+            command: 'ADD_ADMIN',
+            message: response.message,
+            isSuccessful: false,
+        };
+    }
+
+    async removeAdmin(targetUserId: any) {
+        const response: ResponseLocal<Admin> = await this.adminService.removeAdmin(targetUserId);
+        if (response.isSuccess) {
+            return {
+                command: 'REMOVE_ADMIN',
+                message: `Remove admin ${targetUserId} successfully!`,
+                isSuccessful: true,
+                data: response.data,
+            };
+        }
+        return {
+            command: 'REMOVE_ADMIN',
+            message: response.message,
+            isSuccessful: false,
+        };
+    }
+
+    async showAdminList() {
+        return {
+            command: 'ADMIN_LIST',
+            message: 'Get admin list successfully!',
+            isSuccessful: true,
+            data: await this.adminService.getAdminList(),
+        };
+    }
+
+    async updatePageAccessToken(token: string) {
+        await this.settingService.updateSetting('PAGE_ACCESS_TOKEN', token);
+        return {
+            command: 'UPDATE_PAGE_ACCESS_TOKEN',
+            message: 'Update page access token successfully!',
+            isSuccessful: true,
+        };
+    }
+
+    async showPageAccessToken() {
+        return {
+            command: 'PAGE_ACCESS_TOKEN',
+            message: 'Get page access token successfully!',
+            isSuccessful: true,
+            data: await this.settingService.getValuesByKey('PAGE_ACCESS_TOKEN', 'string'),
+        };
+    }
+
+    async adminFunctions(message: string) {
+        // ban user @ban <user_id>
+        // unban user @unban <user_id>
+        // unban all @unban all
+        // show ban list @ban list
+        // on ban @ban on
+        // off ban @ban off
+        // on multiple download @multiple on
+        // on bot @bot on
+        // off bot @bot off
+        // update data @update
+        // add admin @admin add <user_id>
+        // remove admin @admin remove <user_id>
+        // show admin list @admin list
+        // update page access token @token <token>
+        // show page access token @token show
+        const args = message.split(' ');
+        const command = args[0].toLowerCase();
+        const targetUserId = args[1];
+
+        if (command === '@ban') {
+            if (targetUserId === 'all') {
+                return this.unbanAllUsers();
+            } else {
+                return this.banUser(targetUserId);
+            }
+        } else if (command === '@unban') {
+            if (targetUserId === 'all') {
+                return this.unbanAllUsers();
+            } else {
+                return this.unbanUser(targetUserId);
+            }
+        } else if (command === '@banlist') {
+            return this.getBanList();
+        } else if (command === '@banon') {
+            return this.enableBanFunction();
+        } else if (command === '@banoff') {
+            return this.disableBanFunction();
+        } else if (command === '@multipleon') {
+            return this.enableMultipleDownload();
+        } else if (command === '@bot') {
+            if (targetUserId === 'on') {
+                return this.enableBot();
+            } else if (targetUserId === 'off') {
+                return this.disableBot();
+            } else {
+                console.log('Unknown command');
+                return;
+            }
+        } else if (command === '@update') {
+            return this.updateData();
+        } else if (command === '@adminadd') {
+            return this.addAdmin(targetUserId);
+        } else if (command === '@adminremove') {
+            return this.removeAdmin(targetUserId);
+        } else if (command === '@adminlist') {
+            return this.showAdminList();
+        } else if (command === '@token') {
+            if (targetUserId === 'show') {
+                return this.showPageAccessToken();
+            } else {
+                return this.updatePageAccessToken(targetUserId);
+            }
+        } else {
+            console.log('Unknown command');
+        }
     }
 }
