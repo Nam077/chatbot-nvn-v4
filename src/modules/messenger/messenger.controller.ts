@@ -1,8 +1,12 @@
 import { Body, Controller, Get, Post, Query } from '@nestjs/common';
 import { MessengerService } from './messenger.service';
-import { ApiOperation } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { IsPublic } from '../../decorators/auth/is-public.decorator';
 
 @Controller('messenger')
+@ApiTags('Messenger')
+@ApiBearerAuth()
+@IsPublic()
 export class MessengerController {
     constructor(private readonly messengerService: MessengerService) {}
     @Get('/webhook')

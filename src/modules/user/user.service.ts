@@ -6,6 +6,7 @@ import { User } from './entities/user.entity';
 import { Repository } from 'typeorm';
 import { hash } from '../../utils/hash';
 import { ResponseData } from '../../interfaces/response-data.interface';
+import { RegisterDto } from '../auth/dto/register.dto';
 
 @Injectable()
 export class UserService {
@@ -117,6 +118,36 @@ export class UserService {
             isSuccess: true,
             message: 'Delete user successfully',
             statusCode: HttpStatus.OK,
+        };
+    }
+
+    async setCurrentRefreshToken(refreshToken: string, id: number) {
+        await this.userRepository.update(id, {
+            refreshToken: refreshToken,
+        });
+    }
+
+    async register(registerDto: RegisterDto) {
+        const { email, name, password } = registerDto;
+        if (await this.checkExist(email)) {
+            throw new HttpException(
+                {
+                    status: HttpStatus.BAD_REQUEST,
+                    error: 'Email already exists',
+                },
+                HttpStatus.BAD_REQUEST,
+            );
+        }
+        const user = new User();
+        user.email = email;
+        user.name = name;
+        user.password = await hash(password);
+        const result: User = await this.userRepository.save(user);
+        return {
+            data: result,
+            isSuccess: true,
+            message: 'Register successfully',
+            statusCode: HttpStatus.CREATED,
         };
     }
 }

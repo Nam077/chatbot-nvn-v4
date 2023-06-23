@@ -1,4 +1,5 @@
 import { Column, Entity, Index, PrimaryGeneratedColumn } from 'typeorm';
+import { compare } from '../../../utils/hash';
 
 @Entity({
     name: 'users',
@@ -49,4 +50,18 @@ export class User {
         default: 'user',
     })
     role: string;
+
+    @Column({
+        name: 'refresh_token',
+        comment: 'User refresh token',
+        type: 'text',
+        nullable: true,
+    })
+    refreshToken: string;
+    async comparePassword(password: string) {
+        return compare(password, this.password);
+    }
+    isAdmin() {
+        return this.role === 'admin';
+    }
 }

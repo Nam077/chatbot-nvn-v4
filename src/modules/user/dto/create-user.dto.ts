@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEmail, IsIn, IsNotEmpty, IsString, Length } from 'class-validator';
+import { IsEmail, IsIn, IsNotEmpty, IsOptional, IsString, Length } from 'class-validator';
 import { Capitalize, Lowercase } from '../../../decorators/custom-validator.decorator';
 
 export class CreateUserDto {
@@ -64,8 +64,9 @@ export class CreateUserDto {
     @IsString({
         message: 'Role must be string',
     })
+    @IsOptional()
     @IsIn(['admin', 'user'], {
         message: 'Role must be admin or user',
     })
-    role: string;
+    role?: string;
 }

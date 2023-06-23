@@ -19,6 +19,8 @@ import { TagModule } from './modules/tag/tag.module';
 import { FontChunkModule } from './modules/font-chunk/font-chunk.module';
 import { CacheModule } from '@nestjs/cache-manager';
 import { AuthModule } from './modules/auth/auth.module';
+import { AtGuard } from './modules/auth/guards/at-guard.service';
+import { APP_GUARD } from '@nestjs/core';
 
 @Module({
     imports: [
@@ -28,6 +30,7 @@ import { AuthModule } from './modules/auth/auth.module';
             envFilePath: `.env.${process.env.NODE_ENV}`,
         }),
         DatabaseModule,
+        AuthModule,
         UserModule,
         MessengerModule,
         SettingModule,
@@ -42,9 +45,14 @@ import { AuthModule } from './modules/auth/auth.module';
         MessageModule,
         TagModule,
         FontChunkModule,
-        AuthModule,
     ],
     controllers: [AppController],
-    providers: [AppService],
+    providers: [
+        AppService,
+        {
+            provide: APP_GUARD,
+            useValue: AtGuard,
+        },
+    ],
 })
 export class AppModule {}

@@ -1,9 +1,10 @@
 import { Controller, Get, Query } from '@nestjs/common';
 import { ChatService } from './chat.service';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiTags, ApiOperation } from '@nestjs/swagger';
 
 @Controller('chat')
 @ApiTags('Chat')
+@ApiBearerAuth()
 export class ChatController {
     constructor(private readonly chatService: ChatService) {}
 
