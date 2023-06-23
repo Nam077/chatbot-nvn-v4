@@ -1,11 +1,14 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
 import { MessageService } from './message.service';
 import { CreateMessageDto } from './dto/create-message.dto';
 import { UpdateMessageDto } from './dto/update-message.dto';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { RoleGuard } from '../auth/guards/role.guard';
+
 @Controller('message')
 @ApiTags('Message')
 @ApiBearerAuth()
+@UseGuards(RoleGuard)
 export class MessageController {
     constructor(private readonly messageService: MessageService) {}
 

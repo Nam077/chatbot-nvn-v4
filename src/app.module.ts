@@ -51,7 +51,7 @@ import { APP_GUARD } from '@nestjs/core';
         AppService,
         {
             provide: APP_GUARD,
-            useValue: AtGuard,
+            useClass: AtGuard,
         },
     ],
 })

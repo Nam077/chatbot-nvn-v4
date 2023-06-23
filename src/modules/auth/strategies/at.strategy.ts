@@ -19,7 +19,6 @@ export class AtStrategy extends PassportStrategy(Strategy, 'at') {
 
     async validate(payload: any) {
         const user = await this.authService.validateUser(payload);
-        console.log('user', user);
         if (!user) {
             throw new UnauthorizedException();
         }

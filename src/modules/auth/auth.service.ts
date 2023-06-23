@@ -5,6 +5,7 @@ import { UserService } from '../user/user.service';
 import { LoginDto } from './dto/login.dto';
 import { User } from '../user/entities/user.entity';
 import { RegisterDto } from './dto/register.dto';
+
 export interface Token {
     accessToken: string;
     refreshToken: string;

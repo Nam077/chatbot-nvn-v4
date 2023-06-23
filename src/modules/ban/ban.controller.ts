@@ -1,12 +1,14 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
 import { BanService } from './ban.service';
 import { CreateBanDto } from './dto/create-ban.dto';
 import { UpdateBanDto } from './dto/update-ban.dto';
-import { ApiBearerAuth, ApiTags, ApiOperation } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { RoleGuard } from '../auth/guards/role.guard';
 
 @Controller('ban')
 @ApiBearerAuth()
 @ApiTags('Ban')
+@UseGuards(RoleGuard)
 export class BanController {
     constructor(private readonly banService: BanService) {}
 

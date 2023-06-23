@@ -1,22 +1,18 @@
-import { CanActivate, ExecutionContext, ForbiddenException, Inject, Injectable } from '@nestjs/common';
-import { UserService } from '../../user/user.service';
+import { CanActivate, ExecutionContext, ForbiddenException, Injectable } from '@nestjs/common';
 
 @Injectable()
 export class RoleGuard implements CanActivate {
-    constructor(@Inject(UserService) private readonly userService: UserService) {}
+    constructor() {}
 
     async canActivate(context: ExecutionContext): Promise<boolean> {
         const { user } = context.switchToHttp().getRequest();
         if (!user) {
             throw new ForbiddenException();
         }
-        const userInDb = await this.userService.findOne(user.id);
-        if (!userInDb) {
+        if (user.role !== 'admin') {
             throw new ForbiddenException();
         }
-        if (!userInDb.isAdmin()) {
-            throw new ForbiddenException();
-        }
+        if (!user) throw new ForbiddenException();
         return true;
     }
 }

@@ -1,12 +1,14 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
 import { FontService } from './font.service';
 import { CreateFontDto } from './dto/create-font.dto';
 import { UpdateFontDto } from './dto/update-font.dto';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { RoleGuard } from '../auth/guards/role.guard';
 
 @Controller('font')
 @ApiTags('Font')
 @ApiBearerAuth()
+@UseGuards(RoleGuard)
 export class FontController {
     constructor(private readonly fontService: FontService) {}
 

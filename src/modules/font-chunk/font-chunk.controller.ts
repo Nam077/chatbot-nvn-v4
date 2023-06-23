@@ -1,12 +1,14 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
 import { FontChunkService } from './font-chunk.service';
 import { CreateFontChunkDto } from './dto/create-font-chunk.dto';
 import { UpdateFontChunkDto } from './dto/update-font-chunk.dto';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { RoleGuard } from '../auth/guards/role.guard';
 
 @Controller('font-chunk')
 @ApiTags('FontChunk')
 @ApiBearerAuth()
+@UseGuards(RoleGuard)
 export class FontChunkController {
     constructor(private readonly fontChunkService: FontChunkService) {}
 
