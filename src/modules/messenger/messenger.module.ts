@@ -6,9 +6,10 @@ import { SettingService } from '../setting/setting.service';
 import { SettingModule } from '../setting/setting.module';
 import { BotMessenger } from './models/bot-messenger';
 import { HttpModule, HttpService } from '@nestjs/axios';
+import { ChatModule } from '../chat/chat.module';
 
 @Module({
-    imports: [ConfigModule.forRoot(), SettingModule, HttpModule],
+    imports: [ConfigModule.forRoot(), SettingModule, HttpModule, ChatModule],
     controllers: [MessengerController],
     providers: [
         {

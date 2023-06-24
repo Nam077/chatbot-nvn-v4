@@ -128,10 +128,14 @@ export class SettingService {
             case 'number':
                 return Number(setting.value) || 0;
             case 'boolean':
-                return Boolean(setting.value) || false;
+                return setting.value === 'true';
             default:
                 return setting.value;
         }
+    }
+
+    async getValueByKeyBoolean(key: string, defaultValue?: boolean): Promise<boolean> {
+        return (await this.getValuesByKey(key, 'boolean', defaultValue?.toString())) as boolean;
     }
 
     async createKey(key: string, type: SettingType, value?: string) {

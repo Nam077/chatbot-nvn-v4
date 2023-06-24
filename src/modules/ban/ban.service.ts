@@ -187,7 +187,7 @@ export class BanService {
         for (let i = 0; i < bans.length; i += chunk) {
             const currentChunk = bans.slice(i, i + chunk);
             const banInfo = currentChunk.map(
-                (ban) => `Tên: ${ban.name} - PSID: ${ban.senderPsid} - Lý do: ${ban.reason}`,
+                (ban) => `Tên: ${ban.name}\nPSID: ${ban.senderPsid}\nLý do: ${ban.reason}`,
             );
 
             banList.push(banInfo);
@@ -212,6 +212,37 @@ export class BanService {
             isSuccess: true,
             message: 'Ban successfully',
             data: result,
+        };
+    }
+
+    async updateBanNameBySenderPsid(senderPsid: string, name: string) {
+        const ban = await this.findOneBySenderPsid(senderPsid);
+        if (!ban) {
+            return {
+                isSuccess: false,
+                message: 'Ban not found',
+            };
+        }
+        await this.banRepository.update(ban.id, { name });
+        return {
+            isSuccess: true,
+            message: 'Update ban name successfully',
+            data: await this.findOne(ban.id),
+        };
+    }
+
+    async deleteBySenderPsid(senderPsid) {
+        const ban = await this.findOneBySenderPsid(senderPsid);
+        if (!ban) {
+            return {
+                isSuccess: false,
+                message: 'Ban not found',
+            };
+        }
+        await this.banRepository.delete(ban.id);
+        return {
+            isSuccess: true,
+            message: 'Delete ban successfully',
         };
     }
 }

@@ -6,10 +6,10 @@ import { IsPublic } from '../../decorators/auth/is-public.decorator';
 @Controller('messenger')
 @ApiTags('Messenger')
 @ApiBearerAuth()
-@IsPublic()
 export class MessengerController {
     constructor(private readonly messengerService: MessengerService) {}
     @Get('/webhook')
+    @IsPublic()
     @ApiOperation({ summary: 'Setup webhook' })
     getWebHook(
         @Query('hub.mode') mode: string,
@@ -20,6 +20,7 @@ export class MessengerController {
     }
 
     @Post('/webhook')
+    @IsPublic()
     @ApiOperation({ summary: 'Setup webhook' })
     postWebHook(@Body() body) {
         return this.messengerService.postWebHook(body);

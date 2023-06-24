@@ -29,17 +29,7 @@ export type UserInformation = {
     gender?: string;
 };
 
-export enum ButtonType {
-    POSTBACK = 'postback',
-    WEB_URL = 'web_url',
-}
-
-export interface Button {
-    type: ButtonType;
-    title: string;
-    payload?: string;
-    url?: string;
-}
+export type ButtonType = 'web_url' | 'postback';
 
 export enum TemplateType {
     BUTTON = 'button',
@@ -81,8 +71,22 @@ export type Element = {
     title: string;
     subtitle?: string;
     image_url?: string;
-    default_action?: CallToAction;
+    default_action?: DefaultAction;
     buttons?: Button[];
+};
+export interface Button {
+    type: ButtonType;
+    title: string;
+    payload?: string;
+    url?: string;
+}
+export type DefaultAction = {
+    type: 'web_url';
+    url: string;
+    messenger_extensions?: boolean;
+    fallback_url?: string;
+    webview_height_ratio?: 'compact' | 'tall' | 'full';
+    webview_share_button?: 'hide';
 };
 export type PersistentMenu = {
     locale: string;
@@ -107,7 +111,7 @@ export class BotMessenger {
     private readonly url: string;
 
     constructor(private options: MessengerBotOptions, private readonly httpService: HttpService) {
-        this._pageAccessToken = options.pageAccessToken;
+        this._pageAccessToken = options.pageAccessToken.trim();
         this._apiVersion = options.apiVersion || 'v10.0';
         this.url = `https://graph.facebook.com/${this.apiVersion}/`;
         this.initializeAxios();
@@ -118,7 +122,7 @@ export class BotMessenger {
     }
 
     set pageAccessToken(value: string) {
-        this._pageAccessToken = value;
+        this._pageAccessToken = value.trim();
         this.initializeHeaders();
     }
 
@@ -151,7 +155,7 @@ export class BotMessenger {
         await this.sendMarkSeen(senderPsid);
         await this.sendTypingOn(senderPsid);
         try {
-            await this.httpService.axiosRef.post('/me/messages', requestBody);
+            await this.httpService.axiosRef.post('me/messages', requestBody);
         } catch (error) {
         } finally {
             await this.sendTypingOff(senderPsid);
@@ -166,7 +170,7 @@ export class BotMessenger {
             sender_action: senderAction,
         };
         try {
-            return await this.httpService.axiosRef.post('/me/messages', requestBody);
+            return await this.httpService.axiosRef.post('me/messages', requestBody);
         } catch (error) {}
     }
 
@@ -263,7 +267,7 @@ export class BotMessenger {
         return await this.sendTemplate(senderPsid, template);
     }
 
-    async sendGenericTemplate(senderPsid: string, elements: Element[]) {
+    async sendGenericMessage(senderPsid: string, elements: Element[]) {
         const template: Template = {
             template_type: TemplateType.GENERIC,
             elements: elements,
@@ -303,6 +307,12 @@ export class BotMessenger {
                 name: 'Bạn',
                 profilePic: '',
             };
+        }
+    }
+
+    async sendMultipleTextMessage(senderPsid: string, data: string[]) {
+        for (const message of data) {
+            await this.sendTextMessage(senderPsid, message);
         }
     }
 }

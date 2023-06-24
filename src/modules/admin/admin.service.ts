@@ -212,10 +212,13 @@ export class AdminService {
     async getAdminList(chunk = 20): Promise<string[][]> {
         const admins = await this.findAll();
         const result: string[][] = [];
+        if (admins.length === 0) {
+            return [['Hiện tại chưa có admin nào']];
+        }
         for (let i = 0; i < admins.length; i += chunk) {
             const adminChunk = admins.slice(i, i + chunk);
             const adminChunkString = adminChunk.map((admin) => {
-                return `${admin.name} - ${admin.senderPsid}`;
+                return `${admin.senderPsid} - ${admin.name}`;
             });
             result.push(adminChunkString);
         }

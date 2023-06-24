@@ -5932,9 +5932,9 @@ yocto-queue@^0.1.0:
   resolved "https://registry.yarnpkg.com/yocto-queue/-/yocto-queue-0.1.0.tgz#0294eb3dee05028d31ee1a5fa2c556a6aaf10a1b"
   integrity sha512-rVksvsnNCdJ/ohGc6xgPwyN8eheCxsiLM8mxuE/t/mOVqJewPuO1miLpTHQiRgTKCLexL4MeAFVagts7HmNZ2Q==
 
-youtube-search-without-api-key@^1.1.0:
-  version "1.1.0"
-  resolved "https://registry.yarnpkg.com/youtube-search-without-api-key/-/youtube-search-without-api-key-1.1.0.tgz#6294ae865ff0e88707c060c7ee92d31340754c85"
-  integrity sha512-1SaOviXU5CZ9wU1YlMQx7NBysIr5IDRNe+mD/8ml6IAiiDlEOgZ8a01Hs+OhmpQAb+UuY1cOsfca8pcs/CGLUA==
+youtube-search-without-api-key@1.0.7:
+  version "1.0.7"
+  resolved "https://registry.yarnpkg.com/youtube-search-without-api-key/-/youtube-search-without-api-key-1.0.7.tgz#39b348d6416318731430a9316da7900c3744bf4f"
+  integrity sha512-PjwejF6YApZDqTFo46/4q6IQlztUtQsP/8ygcHYyakPHqijIKn36+yUQVPTC92/+IZtqyZBhpTKP1bG6uZKP/Q==
   dependencies:
     got "^11.8.3"

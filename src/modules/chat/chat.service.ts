@@ -31,6 +31,7 @@ enum CacheKey {
     KEY = 'KEY',
     FONT_CHUNK_STRING = 'FONT_CHUNK_STRING',
     FONT_CHUNK = 'FONT_CHUNK',
+    BAN_STATUS = 'BAN_STATUS',
 }
 export type ADMIN_COMMAND =
     | 'BAN'
@@ -40,6 +41,7 @@ export type ADMIN_COMMAND =
     | 'ON_BAN'
     | 'OFF_BAN'
     | 'ON_MULTIPLE_DOWNLOAD'
+    | 'OFF_MULTIPLE_DOWNLOAD'
     | 'ON_BOT'
     | 'OFF_BOT'
     | 'UPDATE_DATA'
@@ -47,7 +49,8 @@ export type ADMIN_COMMAND =
     | 'REMOVE_ADMIN'
     | 'ADMIN_LIST'
     | 'UPDATE_PAGE_ACCESS_TOKEN'
-    | 'SHOW_PAGE_ACCESS_TOKEN';
+    | 'SHOW_PAGE_ACCESS_TOKEN'
+    | 'ADMIN_ERROR';
 export interface AdminCommand {
     command: ADMIN_COMMAND;
     message: string;
@@ -150,8 +153,8 @@ export class ChatService {
         return await this.updateKeyCache();
     }
 
-    async getFontChunkString() {
-        const fontChunk = await this.cacheManager.get(CacheKey.FONT_CHUNK_STRING);
+    async getFontChunkString(): Promise<string[][]> {
+        const fontChunk = await this.cacheManager.get<string[][]>(CacheKey.FONT_CHUNK_STRING);
         if (fontChunk) {
             return fontChunk;
         }
@@ -183,6 +186,14 @@ export class ChatService {
         };
     }
 
+    async updateBanNameBySenderPsid(senderPsid: string, name: string): Promise<string> {
+        const response: ResponseLocal<Ban> = await this.banService.updateBanNameBySenderPsid(senderPsid, name);
+        if (response.isSuccess) {
+            return `Update ban name for user ${senderPsid} successfully!`;
+        }
+        return response.message;
+    }
+
     async banUser(targetUserId: string, reason = `Admin ban`): Promise<AdminCommand> {
         const response: ResponseLocal<Ban> = await this.banService.ban({
             name: targetUserId,
@@ -204,7 +215,7 @@ export class ChatService {
         };
     }
 
-    async unbanUser(targetUserId: any) {
+    async unbanUser(targetUserId: any): Promise<AdminCommand> {
         const response: ResponseLocal<Ban> = await this.banService.unban(targetUserId);
         if (response.isSuccess) {
             return {
@@ -221,7 +232,7 @@ export class ChatService {
         };
     }
 
-    async getBanList() {
+    async getBanList(): Promise<AdminCommand> {
         return {
             command: 'BAN_LIST',
             message: 'Get ban list successfully!',
@@ -230,60 +241,60 @@ export class ChatService {
         };
     }
 
-    async enableBanFunction() {
+    async enableBanFunction(): Promise<AdminCommand> {
         await this.settingService.updateSetting('BAN', 'true');
         return {
-            command: 'ENABLE_BAN',
+            command: 'ON_BAN',
             message: 'Enable ban function successfully!',
             isSuccessful: true,
         };
     }
 
-    async disableBanFunction() {
+    async disableBanFunction(): Promise<AdminCommand> {
         await this.settingService.updateSetting('BAN', 'false');
         return {
-            command: 'DISABLE_BAN',
+            command: 'OFF_BAN',
             message: 'Disable ban function successfully!',
             isSuccessful: true,
         };
     }
 
-    async enableMultipleDownload() {
+    async enableMultipleDownload(): Promise<AdminCommand> {
         await this.settingService.updateSetting('MULTIPLE_DOWNLOAD', 'true');
         return {
-            command: 'ENABLE_MULTIPLE_DOWNLOAD',
+            command: 'ON_MULTIPLE_DOWNLOAD',
             message: 'Enable multiple download successfully!',
             isSuccessful: true,
         };
     }
-    private async disableMultipleDownload() {
+    private async disableMultipleDownload(): Promise<AdminCommand> {
         await this.settingService.updateSetting('MULTIPLE_DOWNLOAD', 'false');
         return {
-            command: 'DISABLE_MULTIPLE_DOWNLOAD',
+            command: 'OFF_MULTIPLE_DOWNLOAD',
             message: 'Disable multiple download successfully!',
             isSuccessful: true,
         };
     }
 
-    async enableBot() {
+    async enableBot(): Promise<AdminCommand> {
         await this.settingService.updateSetting('BOT', 'true');
         return {
-            command: 'ENABLE_BOT',
+            command: 'ON_BOT',
             message: 'Enable bot successfully!',
             isSuccessful: true,
         };
     }
 
-    async disableBot() {
+    async disableBot(): Promise<AdminCommand> {
         await this.settingService.updateSetting('BOT', 'false');
         return {
-            command: 'DISABLE_BOT',
+            command: 'OFF_BOT',
             message: 'Disable bot successfully!',
             isSuccessful: true,
         };
     }
 
-    async updateData() {
+    async updateData(): Promise<AdminCommand> {
         await this.updateKeyCache();
         await this.updateFontChunkStringCache();
         return {
@@ -293,7 +304,7 @@ export class ChatService {
         };
     }
 
-    async addAdmin(targetUserId: any) {
+    async addAdmin(targetUserId: string): Promise<AdminCommand> {
         const response: ResponseLocal<Admin> = await this.adminService.addAdmin(targetUserId);
         if (response.isSuccess) {
             return {
@@ -310,7 +321,7 @@ export class ChatService {
         };
     }
 
-    async removeAdmin(targetUserId: any) {
+    async removeAdmin(targetUserId: string): Promise<AdminCommand> {
         const response: ResponseLocal<Admin> = await this.adminService.removeAdmin(targetUserId);
         if (response.isSuccess) {
             return {
@@ -327,7 +338,7 @@ export class ChatService {
         };
     }
 
-    async showAdminList() {
+    async showAdminList(): Promise<AdminCommand> {
         return {
             command: 'ADMIN_LIST',
             message: 'Get admin list successfully!',
@@ -336,29 +347,30 @@ export class ChatService {
         };
     }
 
-    async updatePageAccessToken(token: string) {
+    async updatePageAccessToken(token: string): Promise<AdminCommand> {
         await this.settingService.updateSetting('PAGE_ACCESS_TOKEN', token);
         return {
             command: 'UPDATE_PAGE_ACCESS_TOKEN',
             message: 'Update page access token successfully!',
             isSuccessful: true,
+            data: token,
         };
     }
 
-    async showPageAccessToken() {
+    async showPageAccessToken(): Promise<AdminCommand> {
         return {
-            command: 'PAGE_ACCESS_TOKEN',
+            command: 'SHOW_PAGE_ACCESS_TOKEN',
             message: 'Get page access token successfully!',
             isSuccessful: true,
             data: await this.settingService.getValuesByKey('PAGE_ACCESS_TOKEN', 'string'),
         };
     }
 
-    async adminFunctions(message: string) {
+    async adminFunctions(message: string): Promise<AdminCommand> {
         const args = removeExtraSpaces(message).trim().split(' ');
         const command = args[0];
         if (args.length < 2) {
-            return { error: 'Missing ban option for ban command.' };
+            return { command: 'ADMIN_ERROR', message: 'Invalid command!', isSuccessful: false };
         }
         switch (command) {
             case '@ban':
@@ -398,7 +410,7 @@ export class ChatService {
                 break;
             case '@multiple':
                 if (args.length < 2) {
-                    return { error: 'Missing option for multiple command.' };
+                    return { command: 'ADMIN_ERROR', message: 'Invalid command!', isSuccessful: false };
                 }
                 const multipleOption = args[1];
                 if (multipleOption === 'on') {
@@ -424,14 +436,22 @@ export class ChatService {
                 const adminOption = args[1];
                 if (adminOption === 'add') {
                     if (args.length < 3) {
-                        return { error: 'Missing user ID for adding admin.' };
+                        return {
+                            command: 'ADMIN_ERROR',
+                            message: 'Missing user ID for adding admin.',
+                            isSuccessful: false,
+                        };
                     }
                     const adminUserId = args[2];
                     // Thêm admin với adminUserId @admin add <user_id>
                     await this.addAdmin(adminUserId);
                 } else if (adminOption === 'remove') {
                     if (args.length < 3) {
-                        return { error: 'Missing user ID for removing admin.' };
+                        return {
+                            command: 'ADMIN_ERROR',
+                            message: 'Missing user ID for removing admin.',
+                            isSuccessful: false,
+                        };
                     }
                     const adminUserId = args[2];
                     // Xóa admin với adminUserId @admin remove <user_id>
@@ -449,7 +469,7 @@ export class ChatService {
                     return await this.showPageAccessToken();
                 } else if (tokenOption === 'update') {
                     if (args.length < 3) {
-                        return { error: 'Missing new token for updating access token.' };
+                        return { command: 'ADMIN_ERROR', message: 'Missing new token.', isSuccessful: false };
                     }
                     const newToken = args[2];
                     // Cập nhật page access token với newToken @token update <new_token>
@@ -467,7 +487,7 @@ export class ChatService {
                 break;
 
             default:
-                return { error: 'Invalid command.' };
+                return { command: 'ADMIN_ERROR', message: 'Invalid command!', isSuccessful: false };
         }
     }
 
@@ -489,17 +509,19 @@ export class ChatService {
             responses,
         };
     }
-    async checkBanByTime(senderPsid: string): Promise<{
+    async checkBanned(senderPsid: string): Promise<{
         ban?: Ban;
         isBanned: boolean;
     }> {
         const ban: Ban = await this.banService.findOneBySenderPsid(senderPsid);
-        if (!ban) {
+        if (ban) {
             return {
-                isBanned: false,
+                isBanned: true,
+                ban,
             };
         }
         const { hour }: TimeCurrent = getTimeCurrent();
+
         if (await this.getBanStatus()) {
             if (hour >= 22 || hour < 6) {
                 const newBan = await this.banService.ban({
@@ -507,30 +529,30 @@ export class ChatService {
                     reason: 'Nhắn tin ngoài giờ cho phép',
                     name: senderPsid,
                 });
+                return {
+                    ban: newBan.data,
+                    isBanned: true,
+                };
             }
-            return {
-                ban,
-                isBanned: true,
-            };
         } else {
             return {
                 ban,
-                isBanned: true,
+                isBanned: false,
             };
         }
     }
 
-    async getBanStatus() {
-        const value = await this.cacheManager.get('ban_status');
+    async getBanStatus(): Promise<boolean> {
+        const value = await this.cacheManager.get<boolean>(CacheKey.BAN_STATUS);
         if (value) {
             return value;
         }
-        return this.updateBanStatus();
+        return await this.updateBanStatus();
     }
 
-    private updateBanStatus() {
-        const banStatus = this.settingService.getValuesByKey('ban_status', 'boolean');
-        this.cacheManager.set('ban_status', banStatus);
+    private async updateBanStatus(): Promise<boolean> {
+        const banStatus = await this.settingService.getValueByKeyBoolean('BAN_STATUS');
+        await this.cacheManager.set(CacheKey.BAN_STATUS, banStatus, 24 * 60 * 60 * 1000);
         return banStatus;
     }
 
@@ -546,5 +568,9 @@ export class ChatService {
         const fontChunk = await this.fontService.findChunk(chunk);
         await this.cacheManager.set(CacheKey.FONT_CHUNK, fontChunk, 24 * 60 * 60 * 1000);
         return fontChunk;
+    }
+
+    async deleteBanned(senderPsid) {
+        await this.banService.deleteBySenderPsid(senderPsid);
     }
 }
