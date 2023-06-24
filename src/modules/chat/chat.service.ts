@@ -556,15 +556,15 @@ export class ChatService {
         return banStatus;
     }
 
-    async getFontChunk(chunk = 10) {
-        const fontChunk = await this.cacheManager.get(CacheKey.FONT_CHUNK);
+    async getFontChunk(chunk = 10): Promise<Font[][]> {
+        const fontChunk = await this.cacheManager.get<Font[][]>(CacheKey.FONT_CHUNK);
         if (fontChunk) {
             return fontChunk;
         }
         return await this.updateFontChunkCache(chunk);
     }
 
-    private async updateFontChunkCache(chunk: number) {
+    private async updateFontChunkCache(chunk: number): Promise<Font[][]> {
         const fontChunk = await this.fontService.findChunk(chunk);
         await this.cacheManager.set(CacheKey.FONT_CHUNK, fontChunk, 24 * 60 * 60 * 1000);
         return fontChunk;

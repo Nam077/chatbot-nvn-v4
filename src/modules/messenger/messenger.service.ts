@@ -3,10 +3,13 @@ import { ConfigService } from '@nestjs/config';
 import { BotMessenger, CallToAction, Element, PersistentMenu, UserInformation } from './models/bot-messenger';
 import { getTimeCurrent, TimeCurrent } from '../../utils/time';
 import { ChatService } from '../chat/chat.service';
-import { QuickReply } from '../../common/bot';
+import { Button, QuickReply } from '../../common/bot';
 import { CrawDataYoutube } from '../chat/crawler/crawler.service';
+import { Font } from '../font/entities/font.entity';
+
 export const INTENT_START = ['bắt đầu', 'start', 'restart', 'restart bot', 'khởi động lại', 'khởi động lại'];
 export const COMMANDS_ADMIN = ['@ban', '@unban', '@multiple', '@bot', '@admin', '@token', '@update'];
+export type TYPE_BUTTON_FONTS = 'postback' | 'web_url';
 enum PAYLOADS {
     RESTART_BOT = 'RESTART_BOT',
     TOGGLE_BOT = 'TOGGLE_BOT',
@@ -17,6 +20,8 @@ enum PAYLOADS {
     VIEW_GUIDE = 'VIEW_GUIDE',
     VIEW_PRICE = 'VIEW_PRICE',
     CONTACT = 'CONTACT',
+    TOGGLE_BOT_ON = 'TOGGLE_BOT_ON',
+    TOGGLE_BOT_OFF = 'TOGGLE_BOT_OFF',
     GET_STARTED = 'GET_STARTED',
 }
 
@@ -323,11 +328,11 @@ export class MessengerService {
     private async toggleBot(senderPsid: string, userInformation: UserInformation) {
         const isBotOff: boolean = this.listOffBan.has(senderPsid);
         const quickReply: QuickReply = {
-            payload: 'TOGGLE_BOT',
+            payload: `TOGGLE_BOT_${isBotOff ? 'ON' : 'OFF'}`,
             title: isBotOff ? '🟢Bật bot' : '🔴Tắt bot',
             content_type: 'text',
         };
-        const message = `Bot hiện tại đã ${isBotOff ? 'tắt' : 'bật'}\nBạn có muốn ${
+        const message = `Bot hiện tại đã ${isBotOff ? 'tắt' : 'bật'}\n${userInformation.name} có muốn ${
             isBotOff ? 'bật' : 'tắt'
         } bot không?`;
         await this.messengerBot.sendQuickReply(senderPsid, message, [quickReply]);
@@ -345,11 +350,9 @@ export class MessengerService {
     }
 
     private async viewPrice(senderPsid: string, userInformation: UserInformation) {
-        return Promise.resolve(undefined);
-    }
-
-    private async viewGuide(senderPsid: string, userInformation: UserInformation) {
-        return Promise.resolve(undefined);
+        const message = `Hiện tại bên mình đang nhận việt hoá font với giá như sau:\n\nFont có số lượng weight < 10: 70.000đ - 100.000đ \n\nFont có số lượng weight >= 10: 60.000đ - 100.000đ\n\nFont có số lượng weight >= 20: 50.000đ - 100.000đ\n\nFont có số lượng weight >= 30: 40.000đ - 100.000đ\n\nFont có số lượng weight >= 40: 30.000đ - 100.000đ\n\nFont có số lượng weight >= 50: 20.000đ - 100.000đ\n\nFont có số lượng weight >= 60: 10.000đ - 100.000đ\n\nFont có số lượng weight >= 70: 5.000đ - 100.000đ\n\nFont có số lượng weight >= 80: 1.000đ - 100.000đ\n\nFont có số lượng weight >= 90: 500đ - 100.000đ\n\nFont có số lượng weight >= 100: 100đ - 100.000đ\n\nNếu ${userInformation.name} có nhu cầu việt hoá font`;
+        await this.messengerBot.sendTextMessage(senderPsid, message);
+        await this.contact(senderPsid, userInformation);
     }
 
     private async viewListFontsText(senderPsid: string, userInformation: UserInformation) {
@@ -375,7 +378,55 @@ export class MessengerService {
     }
 
     private async viewNewFonts(senderPsid: string, userInformation: UserInformation) {
-        return Promise.resolve(undefined);
+        const fonts: Font[][] = await this.chatService.getFontChunk();
+        await this.sendNewFonts(senderPsid, userInformation, fonts);
+    }
+    private async sendNewFonts(senderPsid: string, userInformation: UserInformation, fonts: Font[][]) {
+        const newFonts: Font[] = fonts[fonts.length - 1];
+        await this.sendListFontGeneric(senderPsid, userInformation, newFonts);
+    }
+
+    private async sendListFontGeneric(
+        senderPsid: string,
+        userInformation: UserInformation,
+        fonts: Font[],
+        type: TYPE_BUTTON_FONTS = 'postback',
+    ) {
+        const elements: Element[] = fonts.map((font) => {
+            return {
+                title: font.name,
+                image_url:
+                    font.images[Math.floor(Math.random() * font.images.length)].url ||
+                    'https://i.ibb.co/HB5YtcD/242064584-376039017519810-9165860114478955115-n.jpg',
+                default_action: {
+                    type: 'web_url',
+                    url: font.urlPost,
+                    webview_height_ratio: 'tall',
+                },
+                buttons: type === 'postback' ? this.getButtonPostbackFont(font) : this.getButtonUrlFont(font),
+            };
+        });
+        await this.messengerBot.sendGenericMessage(senderPsid, elements);
+    }
+    getButtonPostbackFont(font: Font): Button[] {
+        return [
+            {
+                payload: font.keys ? font.keys[Math.floor(Math.random() * font.keys.length)].value : font.name,
+                title: 'Tải font',
+                type: 'postback',
+            },
+        ];
+    }
+    getButtonUrlFont(font: Font): Button[] {
+        const buttons: Button[] = [];
+        for (let i = 0; i < font.links.length && i < 3; i++) {
+            buttons.push({
+                type: 'web_url',
+                url: font.links[i].url,
+                title: 'Link ' + (i + 1),
+            });
+        }
+        return buttons;
     }
 
     private async handleListFont(senderPsid: string, postback, userInformation: UserInformation) {
@@ -424,5 +475,66 @@ export class MessengerService {
             },
         ];
         return this.messengerBot.sendQuickReply(senderPsid, 'Bạn muốn làm gì?', quickReplies);
+    }
+    private async viewGuide(senderPsid: string, userInformation: UserInformation) {
+        const string =
+            `Chào ${userInformation.name}!\n` +
+            `Tôi là bot hỗ trợ tải font chữ miễn phí\n` +
+            `-------------------------\n` +
+            `Bạn có thể tìm kiếm font chữ theo tên hoặc tải font chữ theo tên\n` +
+            `Ví dụ: Tôi muốn tải font <tên font>\n` +
+            `-------------------------\n` +
+            `Bạn có thể tìm kiếm video theo tên\n` +
+            `@ytb <tên video>\n` +
+            `Ví dụ: @ytb Âm thầm bên em\n` +
+            `-------------------------\n` +
+            `Bạn có thể hỏi kết quả xổ số\n` +
+            `Ví dụ: @xsmb\n` +
+            `-------------------------\n` +
+            `Bạn có thể hỏi thông tin covid\n` +
+            `@covid <tên quốc gia>\n` +
+            `Ví dụ: @covid Việt Nam\n` +
+            `-------------------------\n` +
+            `Bạn có thể lấy số may mắn\n` +
+            `@lucky min=<số nhỏ nhất> max=<số lớn nhất>\n get=<số lượng số>\n` +
+            `Ví dụ: @lucky min=1 max=100 get=5\n` +
+            `-------------------------\n` +
+            `Bạn có thể hỏi bot ăn gì hôm nay\n` +
+            `Ví dụ: Hôm nay ăn gì\n` +
+            `-------------------------\n` +
+            `Bạn có thể hỏi thời tiết theo địa điểm\n` +
+            `Ví dụ: Thời tiết <địa điểm>\n` +
+            `Ví dụ: Thời tiết Hà Nội\n` +
+            `-------------------------\n` +
+            `Bạn có thể hỏi thông tin cơ bản\n` +
+            `Ví dụ: Tại sao lá cây lại có màu xanh ?\n` +
+            `-------------------------\n` +
+            `Bạn có thể hỏi tỷ số bóng đá\n` +
+            `Ví dụ: Tỷ số bóng đá Việt Nam - Thái Lan\n` +
+            `-------------------------\n` +
+            `Bạn có thể hỏi ngày sinh ngày lễ, và nhiều thứ khác\n` +
+            `Ví dụ: Ngày sinh của Ronaldo\n` +
+            `-------------------------\n` +
+            `Bạn có thể hỏi giá vật giá, tiền, bitcoin\n` +
+            `Ví dụ: Giá bitcoin\n` +
+            `-------------------------\n` +
+            `Bạn có thể hỏi định nghĩa\n` +
+            `Ví dụ: Định nghĩa của tình yêu\n` +
+            `-------------------------\n` +
+            `Bạn có thể chuyển đổi đơn vị\n` +
+            `Ví dụ: 3 tấn bằng bao nhiêu kg\n` +
+            `-------------------------\n` +
+            `Bạn có thể chuyển đổi tiền tệ\n` +
+            `Ví dụ: 3000 $ bằng bao nhiêu đồng\n` +
+            `-------------------------\n` +
+            `Bạn có thể hỏi lyric bài hát\n` +
+            `Lyric  <tên bài hát>\n` +
+            `Ví dụ: Lyric Có hẹn với thanh xuân\n` +
+            `-------------------------\n` +
+            `Bạn có thể hỏi kiến thức lịch sử, địa lý và vô vàn chủ đề khác\n` +
+            `Ví dụ: Chiến dịch Điện Biên Phủ ngày tháng năm nào ?\n` +
+            `Ví dụ: Địa lý Việt Nam có bao nhiêu tỉnh ?\n` +
+            `-------------------------\n`;
+        return await this.messengerBot.sendTextMessage(senderPsid, string);
     }
 }

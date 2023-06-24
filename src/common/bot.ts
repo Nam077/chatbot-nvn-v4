@@ -29,11 +29,7 @@ export type User = {
     gender?: string;
 };
 
-export enum ButtonType {
-    POSTBACK = 'postback',
-    WEB_URL = 'web_url',
-}
-
+export type ButtonType = 'web_url' | 'postback';
 export interface Button {
     type: ButtonType;
     title: string;
