@@ -4,7 +4,7 @@ import { BotMessenger, CallToAction, Element, PersistentMenu, UserInformation } 
 import { getTimeCurrent, TimeCurrent } from '../../utils/time';
 import { ChatService, DataFromMessage } from '../chat/chat.service';
 import { Button, QuickReply } from '../../common/bot';
-import { CrawDataYoutube } from '../chat/crawler/crawler.service';
+import { CrawDataGoogle, CrawDataYoutube } from '../chat/crawler/crawler.service';
 import { Font } from '../font/entities/font.entity';
 import { Response } from '../response/entities/response.entity';
 import { getRanDomBetween } from '../../utils/number';
@@ -219,6 +219,32 @@ export class MessengerService {
             const data = await this.chatService.getYouTubeSearch(message);
             if (data) {
                 await this.sendYoutubeMessage(senderPsid, data);
+            }
+        } else if (message.toLowerCase().includes('@@lucky')) {
+            const data = await this.chatService.getLuckyNumber(message);
+            if (data) {
+                await this.messengerBot.sendTextMessage(senderPsid, data.title);
+            }
+        } else if (message.includes('@xsmb')) {
+            const xsmb: string = await this.chatService.getXSMB();
+            await this.messengerBot.sendTextMessage(senderPsid, xsmb);
+            return;
+        } else {
+            const crawlerGoogles: CrawDataGoogle[] = await this.chatService.crawlerFromGoogleSearch(message);
+            if (crawlerGoogles.length > 0) {
+                const crawlerGoogle = crawlerGoogles[0];
+                if (typeof crawlerGoogle.data === 'string') {
+                    await this.messengerBot.sendTextMessage(senderPsid, crawlerGoogle.data);
+                    return;
+                }
+                if (crawlerGoogle.data instanceof Array) {
+                    await this.messengerBot.sendMultipleTextMessage(senderPsid, crawlerGoogle.data);
+                    return;
+                }
+
+                return;
+            } else {
+                return;
             }
         }
     }
@@ -532,7 +558,7 @@ export class MessengerService {
     }
 
     private async sendNewFonts(senderPsid: string, userInformation: UserInformation, fonts: Font[][]) {
-        const newFonts: Font[] = fonts[fonts.length - 1];
+        const newFonts: Font[] = fonts[fonts.length - 1].reverse();
         await this.sendListFontGeneric(senderPsid, userInformation, newFonts);
     }
 
@@ -669,8 +695,8 @@ export class MessengerService {
             `Ví dụ: Tôi muốn tải font <tên font>\n` +
             `-------------------------\n` +
             `Bạn có thể tìm kiếm video theo tên\n` +
-            `@ytb <tên video>\n` +
-            `Ví dụ: @ytb Âm thầm bên em\n` +
+            `@yt <tên video>\n` +
+            `Ví dụ: @yt Âm thầm bên em\n` +
             `-------------------------\n` +
             `Bạn có thể hỏi kết quả xổ số\n` +
             `Ví dụ: @xsmb\n` +
