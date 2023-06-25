@@ -199,7 +199,7 @@ export class MessengerService {
         const time: TimeCurrent = getTimeCurrent('Asia/Ho_Chi_Minh');
         const userInformation: UserInformation = await this.messengerBot.getUserProfile(senderPsid);
         const dataFromMessage: DataFromMessage = await this.chatService.getDataFromMessage(message);
-        if (dataFromMessage) {
+        if (dataFromMessage.fonts.length > 0 || dataFromMessage.responses.length > 0) {
             if (dataFromMessage.fonts.length > 0) {
                 return await this.handleSendFonts(senderPsid, userInformation, dataFromMessage.fonts);
             } else if (dataFromMessage.responses.length > 0) {
@@ -228,7 +228,7 @@ export class MessengerService {
             if (data) {
                 await this.sendYoutubeMessage(senderPsid, data);
             }
-        } else if (message.toLowerCase().includes('@@lucky')) {
+        } else if (message.toLowerCase().includes('@lucky')) {
             const data = await this.chatService.getLuckyNumber(message);
             if (data) {
                 await this.messengerBot.sendTextMessage(senderPsid, data.title);
@@ -239,6 +239,7 @@ export class MessengerService {
             return;
         } else {
             const crawlerGoogles: CrawDataGoogle[] = await this.chatService.crawlerFromGoogleSearch(message);
+            console.log(crawlerGoogles);
             if (crawlerGoogles.length > 0) {
                 const crawlerGoogle = crawlerGoogles[0];
                 if (typeof crawlerGoogle.data === 'string') {
@@ -336,14 +337,7 @@ export class MessengerService {
         if (payload.includes(PAYLOADS.LIST_FONT)) {
             return await this.handleListFont(senderPsid, payload, userInformation);
         }
-        const dataFromMessage: DataFromMessage = await this.chatService.getDataFromMessage(payload);
-        if (dataFromMessage) {
-            if (dataFromMessage.fonts.length > 0) {
-                return await this.handleSendFonts(senderPsid, userInformation, dataFromMessage.fonts);
-            } else if (dataFromMessage.responses.length > 0) {
-                return await this.handleSendResponses(senderPsid, userInformation, dataFromMessage.responses);
-            }
-        }
+
         switch (payload) {
             case PAYLOADS.RESTART_BOT:
                 return await this.sendStartMessage(senderPsid, userInformation);
@@ -366,6 +360,14 @@ export class MessengerService {
             case PAYLOADS.GET_STARTED:
                 return await this.sendStartMessage(senderPsid, userInformation);
             default:
+                const dataFromMessage: DataFromMessage = await this.chatService.getDataFromMessage(payload);
+                if (dataFromMessage) {
+                    if (dataFromMessage.fonts.length > 0) {
+                        return await this.handleSendFonts(senderPsid, userInformation, dataFromMessage.fonts);
+                    } else if (dataFromMessage.responses.length > 0) {
+                        return await this.handleSendResponses(senderPsid, userInformation, dataFromMessage.responses);
+                    }
+                }
                 return;
         }
     }
@@ -373,6 +375,7 @@ export class MessengerService {
     private async handleQuickReply(senderPsid: string, quickReply) {
         const userInformation: UserInformation = await this.messengerBot.getUserProfile(senderPsid);
         const payload = quickReply.payload;
+        console.log(payload);
         switch (payload) {
             case PAYLOADS.VIEW_NEW_FONTS:
                 return await this.viewNewFonts(senderPsid, userInformation);

@@ -537,7 +537,7 @@ export class ChatService {
             }
         });
         return {
-            fonts: (await this.getMultipleDownloadStatus()) ? fonts : [fonts[0]],
+            fonts: (await this.getMultipleDownloadStatus()) ? fonts : fonts.length > 0 ? [fonts[0]] : [],
             responses,
         };
     }
