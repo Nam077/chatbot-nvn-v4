@@ -31,7 +31,7 @@ enum PAYLOADS {
 
 @Injectable()
 export class MessengerService {
-    private listOffBan: Set<string> = new Set();
+    private listBotOff: Set<string> = new Set();
 
     constructor(
         private readonly configService: ConfigService,
@@ -39,12 +39,12 @@ export class MessengerService {
         private readonly chatService: ChatService,
     ) {}
 
-    private addListOffBan(senderPsid: string) {
-        this.listOffBan.add(senderPsid);
+    private addListBotOff(senderPsid: string) {
+        this.listBotOff.add(senderPsid);
     }
 
-    private removeListOffBan(senderPsid: string) {
-        this.listOffBan.delete(senderPsid);
+    private removeListBotOff(senderPsid: string) {
+        this.listBotOff.delete(senderPsid);
     }
 
     async getWebHook(mode: string, challenge: string, verifyToken: string) {
@@ -78,7 +78,9 @@ export class MessengerService {
                             if (await this.checkBan(senderPsid)) {
                                 return 'EVENT_RECEIVED';
                             }
-                            return await this.handleMessage(senderPsid, webhookEvent.message.text);
+                            if (!this.listBotOff.has(senderPsid)) {
+                                return await this.handleMessage(senderPsid, webhookEvent.message.text);
+                            }
                         } else if (webhookEvent.postback) {
                             if (await this.checkBan(senderPsid)) {
                                 return 'EVENT_RECEIVED';
@@ -327,7 +329,43 @@ export class MessengerService {
     }
 
     private async handleQuickReply(senderPsid: string, quickReply) {
-        return;
+        const userInformation: UserInformation = await this.messengerBot.getUserProfile(senderPsid);
+        const payload = quickReply.payload;
+        switch (payload) {
+            case PAYLOADS.VIEW_NEW_FONTS:
+                return await this.viewNewFonts(senderPsid, userInformation);
+            case PAYLOADS.VIEW_ALL_FONTS:
+                return await this.viewAllFonts(senderPsid, userInformation);
+            case PAYLOADS.VIEW_LIST_TEXT_FONTS:
+                return await this.viewListFontsText(senderPsid, userInformation);
+            case PAYLOADS.VIEW_GUIDE:
+                return await this.viewGuide(senderPsid, userInformation);
+            case PAYLOADS.VIEW_PRICE:
+                return await this.viewPrice(senderPsid, userInformation);
+            case PAYLOADS.CONTACT:
+                return await this.sendContact(senderPsid, userInformation);
+            case PAYLOADS.GET_STARTED:
+                return await this.sendStartMessage(senderPsid, userInformation);
+            case PAYLOADS.BUY_ALL_FONTS:
+                return await this.buyAllFonts(senderPsid, userInformation);
+            case PAYLOADS.TOGGLE_BOT:
+                return await this.toggleBot(senderPsid, userInformation);
+            case PAYLOADS.TOGGLE_BOT_ON:
+                return await this.toggleBotOn(senderPsid, userInformation);
+            case PAYLOADS.TOGGLE_BOT_OFF:
+                return await this.toggleBotOff(senderPsid, userInformation);
+            default:
+                return;
+        }
+    }
+
+    private async toggleBotOn(senderPsid: string, userInformation: UserInformation) {
+        await this.messengerBot.sendTextMessage(senderPsid, 'Bật bot thành công');
+        this.removeListBotOff(senderPsid);
+    }
+    private async toggleBotOff(senderPsid: string, userInformation: UserInformation) {
+        await this.messengerBot.sendTextMessage(senderPsid, 'Tắt bot thành công');
+        this.addListBotOff(senderPsid);
     }
 
     private getPersistentMenu(): PersistentMenu {
@@ -338,9 +376,9 @@ export class MessengerService {
                 title: '🔄 Khởi động lại bot',
             },
             {
-                // tắt bot
+                // bật tắt bot
                 type: 'postback',
-                title: '🔕 Tắt bot',
+                title: '🤖 Bật/Tắt bot',
                 payload: PAYLOADS.TOGGLE_BOT,
             },
             {
@@ -433,7 +471,7 @@ export class MessengerService {
     }
 
     private async toggleBot(senderPsid: string, userInformation: UserInformation) {
-        const isBotOff: boolean = this.listOffBan.has(senderPsid);
+        const isBotOff: boolean = this.listBotOff.has(senderPsid);
         const quickReply: QuickReply = {
             payload: `TOGGLE_BOT_${isBotOff ? 'ON' : 'OFF'}`,
             title: isBotOff ? '🟢 Bật bot' : '🔴 Tắt bot',
@@ -587,6 +625,11 @@ export class MessengerService {
                 content_type: 'text',
                 title: '🔥 Xem các font mới nhất',
                 payload: PAYLOADS.VIEW_NEW_FONTS,
+            },
+            {
+                content_type: 'text',
+                title: '🛒 Mua tổng hợp font',
+                payload: PAYLOADS.BUY_ALL_FONTS,
             },
             {
                 content_type: 'text',
