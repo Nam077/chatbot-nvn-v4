@@ -6,6 +6,7 @@ import { chunkArray } from '../../utils/string';
 import * as foods from './data/foods.json';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { getRanDomBetween } from '../../utils/number';
 @Injectable()
 export class FoodService {
     constructor(@InjectRepository(Food) private foodRepository: Repository<Food>) {}
@@ -40,7 +41,7 @@ export class FoodService {
 
     async getRandomFood(): Promise<Food> {
         const count = await this.getCount();
-        const random = Math.floor(Math.random() * count);
+        const random = getRanDomBetween(1, count);
         const food = await this.findOne(random);
         if (!food) {
             return await this.getRandomFood();

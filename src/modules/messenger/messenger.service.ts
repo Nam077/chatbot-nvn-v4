@@ -9,9 +9,11 @@ import { Font } from '../font/entities/font.entity';
 import { Response } from '../response/entities/response.entity';
 import { getRanDomBetween } from '../../utils/number';
 import { chunkArray, validateMessage } from '../../utils/string';
+import { Food } from '../food/entities/food.entity';
 
 export const INTENT_START = ['bắt đầu', 'start', 'restart', 'restart bot', 'khởi động lại', 'khởi động lại'];
 export const COMMANDS_ADMIN = ['@ban', '@unban', '@multiple', '@bot', '@admin', '@token', '@update'];
+const FOOD_COMMANDS = ['ăn gì', 'an gi', 'món gì', 'món khác', 'nấu gì'];
 export type TYPE_BUTTON_FONTS = 'postback' | 'web_url';
 enum PAYLOADS {
     RESTART_BOT = 'RESTART_BOT',
@@ -215,6 +217,12 @@ export class MessengerService {
                 return this.handleAdminCommand(senderPsid, message);
             }
         });
+        FOOD_COMMANDS.forEach((command) => {
+            if (message.toLowerCase().includes(command)) {
+                return this.handleFoodReCommand(senderPsid, userInformation);
+            }
+        });
+
         if (message.toLowerCase().includes('@yt')) {
             const data = await this.chatService.getYouTubeSearch(message);
             if (data) {
@@ -751,5 +759,18 @@ export class MessengerService {
         const persistentMenu: PersistentMenu = this.getPersistentMenu();
         await this.messengerBot.setPersistentMenu([persistentMenu]);
         return `Set up persistent menu success`;
+    }
+
+    private async handleFoodReCommand(senderPsid: string, userProfile: UserInformation) {
+        const food: Food = await this.chatService.getRandomFood();
+        await this.messengerBot.sendTextMessage(
+            senderPsid,
+            `Chào ${userProfile.name}, mình gợi ý cho bạn món ăn ngon nhé`,
+        );
+        await this.messengerBot.sendImageMessage(senderPsid, food.image);
+        await this.messengerBot.sendTextMessage(senderPsid, food.name);
+        await this.messengerBot.sendTextMessage(senderPsid, food.description);
+        await this.messengerBot.sendTextMessage(senderPsid, food.recipe);
+        return;
     }
 }
