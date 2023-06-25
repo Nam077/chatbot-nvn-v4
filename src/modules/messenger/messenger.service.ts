@@ -212,11 +212,13 @@ export class MessengerService {
                 return this.sendStartMessage(senderPsid, userInformation);
             }
         });
-        COMMANDS_ADMIN.forEach((command) => {
-            if (message.toLowerCase().includes(command)) {
-                return this.handleAdminCommand(senderPsid, message);
-            }
-        });
+        if (await this.chatService.isAdmin(senderPsid)) {
+            COMMANDS_ADMIN.forEach((command) => {
+                if (message.toLowerCase().includes(command)) {
+                    return this.handleAdminCommand(senderPsid, message);
+                }
+            });
+        }
         FOOD_COMMANDS.forEach((command) => {
             if (message.toLowerCase().includes(command)) {
                 return this.handleFoodRecommend(senderPsid, userInformation);
