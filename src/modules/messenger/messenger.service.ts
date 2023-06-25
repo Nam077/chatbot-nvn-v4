@@ -281,6 +281,7 @@ export class MessengerService {
 
     private async handleAdminCommand(senderPsid: string, message: string) {
         const result = await this.chatService.adminFunctions(message);
+        console.log(result);
         if (result.command === 'BAN') {
             if (result.isSuccessful) {
                 const senderInformation: UserInformation = await this.messengerBot.getUserProfile(

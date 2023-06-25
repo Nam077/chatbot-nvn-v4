@@ -402,6 +402,7 @@ export class ChatService {
         }
         switch (command) {
             case '@ban':
+                console.log('ban');
                 const banOption = args[1];
                 // Xử lý chức năng ban user
                 if (banOption === 'list') {
@@ -441,24 +442,31 @@ export class ChatService {
                 const multipleOption = args[1];
                 if (multipleOption === 'on') {
                     // Bật multiple download @multiple on
-                    return await this.enableMultipleDownload();
+                    const result = await this.enableMultipleDownload();
+                    await this.updateMultipleDownloadStatus();
+                    return result;
                 } else if (multipleOption === 'off') {
                     // Tắt multiple download @multiple off
-                    return await this.disableMultipleDownload();
+                    const result = await this.disableMultipleDownload();
+                    await this.updateMultipleDownloadStatus();
+                    return result;
+                } else {
+                    return { command: 'ADMIN_ERROR', message: 'Invalid command!', isSuccessful: false };
                 }
-                break;
 
             case '@bot':
                 const botOption = args[1];
                 if (botOption === 'on') {
+                    const result = await this.enableBot();
                     await this.updateBotStatus();
-                    return await this.enableBot();
+                    return result;
                 } else if (botOption === 'off') {
+                    const result = await this.disableBot();
                     await this.updateBotStatus();
-                    return await this.disableBot();
+                    return result;
+                } else {
+                    return { command: 'ADMIN_ERROR', message: 'Invalid command!', isSuccessful: false };
                 }
-                break;
-
             case '@admin':
                 const adminOption = args[1];
                 if (adminOption === 'add') {
@@ -470,9 +478,9 @@ export class ChatService {
                         };
                     }
                     const adminUserId = args[2];
-                    // Thêm admin với adminUserId @admin add <user_id>
-                    await this.addAdmin(adminUserId);
+                    const result = await this.addAdmin(adminUserId);
                     await this.updateAdminCache();
+                    return result;
                 } else if (adminOption === 'remove') {
                     if (args.length < 3) {
                         return {
@@ -483,14 +491,15 @@ export class ChatService {
                     }
                     const adminUserId = args[2];
                     // Xóa admin với adminUserId @admin remove <user_id>
-                    await this.removeAdmin(adminUserId);
+                    const result = await this.removeAdmin(adminUserId);
                     await this.updateAdminCache();
+                    return result;
                 } else if (adminOption === 'list') {
                     // Lấy danh sách admin
                     return await this.showAdminList();
+                } else {
+                    return { command: 'ADMIN_ERROR', message: 'Invalid command!', isSuccessful: false };
                 }
-                break;
-
             case '@token':
                 const tokenOption = args[1];
                 if (tokenOption === 'show') {
@@ -503,8 +512,9 @@ export class ChatService {
                     const newToken = args[2];
                     // Cập nhật page access token với newToken @token update <new_token>
                     return await this.updatePageAccessToken(newToken);
+                } else {
+                    return { command: 'ADMIN_ERROR', message: 'Invalid command!', isSuccessful: false };
                 }
-                break;
 
             case '@update':
                 await this.updateData();
@@ -513,7 +523,6 @@ export class ChatService {
                     message: 'Update data successfully!',
                     isSuccessful: true,
                 };
-
             default:
                 return { command: 'ADMIN_ERROR', message: 'Invalid command!', isSuccessful: false };
         }
