@@ -336,6 +336,14 @@ export class MessengerService {
         if (payload.includes(PAYLOADS.LIST_FONT)) {
             return await this.handleListFont(senderPsid, payload, userInformation);
         }
+        const dataFromMessage: DataFromMessage = await this.chatService.getDataFromMessage(payload);
+        if (dataFromMessage) {
+            if (dataFromMessage.fonts.length > 0) {
+                return await this.handleSendFonts(senderPsid, userInformation, dataFromMessage.fonts);
+            } else if (dataFromMessage.responses.length > 0) {
+                return await this.handleSendResponses(senderPsid, userInformation, dataFromMessage.responses);
+            }
+        }
         switch (payload) {
             case PAYLOADS.RESTART_BOT:
                 return await this.sendStartMessage(senderPsid, userInformation);
