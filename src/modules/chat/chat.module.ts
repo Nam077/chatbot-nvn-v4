@@ -15,6 +15,7 @@ import { HttpModule } from '@nestjs/axios';
 import { BanModule } from '../ban/ban.module';
 import { SettingModule } from '../setting/setting.module';
 import { AdminModule } from '../admin/admin.module';
+import { FoodModule } from '../food/food.module';
 
 @Module({
     imports: [
@@ -30,6 +31,7 @@ import { AdminModule } from '../admin/admin.module';
         BanModule,
         SettingModule,
         AdminModule,
+        FoodModule,
     ],
     controllers: [ChatController],
     providers: [ChatService, GoogleSheetService, CrawlerService],

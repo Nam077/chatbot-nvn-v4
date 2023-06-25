@@ -21,6 +21,7 @@ import { CacheModule } from '@nestjs/cache-manager';
 import { AuthModule } from './modules/auth/auth.module';
 import { AtGuard } from './modules/auth/guards/at-guard.service';
 import { APP_GUARD } from '@nestjs/core';
+import { FoodModule } from './modules/food/food.module';
 
 @Module({
     imports: [
@@ -45,6 +46,7 @@ import { APP_GUARD } from '@nestjs/core';
         MessageModule,
         TagModule,
         FontChunkModule,
+        FoodModule,
     ],
     controllers: [AppController],
     providers: [

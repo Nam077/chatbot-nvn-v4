@@ -25,6 +25,8 @@ import { removeExtraSpaces } from '../../utils/string';
 import { Response } from '../response/entities/response.entity';
 import { Font } from '../font/entities/font.entity';
 import { getTimeCurrent, TimeCurrent } from '../../utils/time';
+import { FoodService } from '../food/food.service';
+import { Food } from '../food/entities/food.entity';
 
 enum KeyEnum {
     FONT = 'FONT',
@@ -82,6 +84,7 @@ export class ChatService {
         private readonly banService: BanService,
         private readonly settingService: SettingService,
         private readonly adminService: AdminService,
+        private readonly foodService: FoodService,
         @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
     ) {}
 
@@ -640,5 +643,9 @@ export class ChatService {
 
     async isAdmin(senderPsid: string): Promise<boolean> {
         return (await this.getAdmins()).includes(senderPsid);
+    }
+
+    async getRandomFood(): Promise<Food> {
+        return await this.foodService.getRandomFood();
     }
 }
