@@ -26,13 +26,20 @@ import { Response } from '../response/entities/response.entity';
 import { Font } from '../font/entities/font.entity';
 import { getTimeCurrent, TimeCurrent } from '../../utils/time';
 
-enum CacheKey {
+enum KeyEnum {
     FONT = 'FONT',
     KEY = 'KEY',
     FONT_CHUNK_STRING = 'FONT_CHUNK_STRING',
     FONT_CHUNK = 'FONT_CHUNK',
     BAN_STATUS = 'BAN_STATUS',
+    ADMIN_LIST = 'ADMIN_LIST',
+    BOT_STATUS = 'BOT_STATUS',
+    MULTIPLE_DOWNLOAD_STATUS = 'MULTIPLE_DOWNLOAD_STATUS',
 }
+export type DataFromMessage = {
+    fonts: Font[];
+    responses: Response[];
+};
 export type ADMIN_COMMAND =
     | 'BAN'
     | 'UNBAN'
@@ -51,6 +58,7 @@ export type ADMIN_COMMAND =
     | 'UPDATE_PAGE_ACCESS_TOKEN'
     | 'SHOW_PAGE_ACCESS_TOKEN'
     | 'ADMIN_ERROR';
+
 export interface AdminCommand {
     command: ADMIN_COMMAND;
     message: string;
@@ -58,6 +66,7 @@ export interface AdminCommand {
     error?: string;
     data?: any;
 }
+const CACHE_TTL_MILLISECOND: number = 1000 * 60 * 60 * 24 * 7; // 7 days
 @Injectable()
 export class ChatService {
     constructor(
@@ -125,15 +134,31 @@ export class ChatService {
             await this.responseService.createMultiple(responseCreateDtos, true);
             await this.updateKeyCache();
             await this.updateFontChunkStringCache();
+            await this.updateFontChunkCache(10);
             return 'Update data successfully!';
         } catch (e) {
             throw new HttpException('Có lỗi xảy ra', HttpStatus.BAD_REQUEST);
         }
     }
 
+    async getAdmins(): Promise<string[]> {
+        const admins = await this.cacheManager.get<string[]>(KeyEnum.ADMIN_LIST);
+        if (admins) {
+            return admins;
+        }
+        return await this.updateAdminCache();
+    }
+
+    async updateAdminCache(): Promise<string[]> {
+        const admins = (await this.adminService.findAll()).map((admin) => admin.senderPsid);
+        await this.cacheManager.set(KeyEnum.ADMIN_LIST, admins, CACHE_TTL_MILLISECOND);
+        return admins;
+    }
+
     async crawlerFromGoogleSearch(key: string): Promise<CrawDataGoogle[]> {
         return await this.crawlerService.crawlerFromGoogleSearch(key);
     }
+
     async getYouTubeSearch(key: string): Promise<CrawDataYoutube[]> {
         return await this.crawlerService.getYoutube(key);
     }
@@ -141,12 +166,13 @@ export class ChatService {
     async getXSMB(): Promise<string> {
         return await this.crawlerService.crawlerXSMB();
     }
+
     getLuckyNumber(str: string): CrawDataLucky {
         return this.crawlerService.getLuckyNumber(str);
     }
 
     async getKeys(): Promise<Key[]> {
-        const keys = await this.cacheManager.get<Key[]>(CacheKey.KEY);
+        const keys = await this.cacheManager.get<Key[]>(KeyEnum.KEY);
         if (keys) {
             return keys;
         }
@@ -154,7 +180,7 @@ export class ChatService {
     }
 
     async getFontChunkString(): Promise<string[][]> {
-        const fontChunk = await this.cacheManager.get<string[][]>(CacheKey.FONT_CHUNK_STRING);
+        const fontChunk = await this.cacheManager.get<string[][]>(KeyEnum.FONT_CHUNK_STRING);
         if (fontChunk) {
             return fontChunk;
         }
@@ -163,13 +189,13 @@ export class ChatService {
 
     async updateFontChunkStringCache() {
         const fontChunkFromDb = await this.fontService.findChunkGetString();
-        await this.cacheManager.set(CacheKey.FONT_CHUNK_STRING, fontChunkFromDb, 24 * 60 * 60 * 1000);
+        await this.cacheManager.set(KeyEnum.FONT_CHUNK_STRING, fontChunkFromDb, CACHE_TTL_MILLISECOND);
         return fontChunkFromDb;
     }
 
     async updateKeyCache() {
         const keysFromDb = await this.keyService.findAll();
-        await this.cacheManager.set(CacheKey.KEY, keysFromDb, 24 * 60 * 60 * 1000);
+        await this.cacheManager.set(KeyEnum.KEY, keysFromDb, CACHE_TTL_MILLISECOND);
         return keysFromDb;
     }
 
@@ -242,7 +268,7 @@ export class ChatService {
     }
 
     async enableBanFunction(): Promise<AdminCommand> {
-        await this.settingService.updateSetting('BAN', 'true');
+        await this.settingService.updateSetting(KeyEnum.BAN_STATUS, 'true');
         return {
             command: 'ON_BAN',
             message: 'Enable ban function successfully!',
@@ -251,7 +277,7 @@ export class ChatService {
     }
 
     async disableBanFunction(): Promise<AdminCommand> {
-        await this.settingService.updateSetting('BAN', 'false');
+        await this.settingService.updateSetting(KeyEnum.BAN_STATUS, 'false');
         return {
             command: 'OFF_BAN',
             message: 'Disable ban function successfully!',
@@ -260,15 +286,16 @@ export class ChatService {
     }
 
     async enableMultipleDownload(): Promise<AdminCommand> {
-        await this.settingService.updateSetting('MULTIPLE_DOWNLOAD', 'true');
+        await this.settingService.updateSetting(KeyEnum.MULTIPLE_DOWNLOAD_STATUS, 'true');
         return {
             command: 'ON_MULTIPLE_DOWNLOAD',
             message: 'Enable multiple download successfully!',
             isSuccessful: true,
         };
     }
+
     private async disableMultipleDownload(): Promise<AdminCommand> {
-        await this.settingService.updateSetting('MULTIPLE_DOWNLOAD', 'false');
+        await this.settingService.updateSetting(KeyEnum.MULTIPLE_DOWNLOAD_STATUS, 'false');
         return {
             command: 'OFF_MULTIPLE_DOWNLOAD',
             message: 'Disable multiple download successfully!',
@@ -277,16 +304,16 @@ export class ChatService {
     }
 
     async enableBot(): Promise<AdminCommand> {
-        await this.settingService.updateSetting('BOT', 'true');
+        await this.settingService.updateSetting(KeyEnum.BOT_STATUS, 'true');
         return {
             command: 'ON_BOT',
             message: 'Enable bot successfully!',
-            isSuccessful: true,
+            isSuccessful: true, //
         };
     }
 
     async disableBot(): Promise<AdminCommand> {
-        await this.settingService.updateSetting('BOT', 'false');
+        await this.settingService.updateSetting(KeyEnum.BOT_STATUS, 'false');
         return {
             command: 'OFF_BOT',
             message: 'Disable bot successfully!',
@@ -295,8 +322,7 @@ export class ChatService {
     }
 
     async updateData(): Promise<AdminCommand> {
-        await this.updateKeyCache();
-        await this.updateFontChunkStringCache();
+        await this.updateDataFromGoogleSheet();
         return {
             command: 'UPDATE_DATA',
             message: 'Update data successfully!',
@@ -397,7 +423,6 @@ export class ChatService {
                         return await this.banUser(userId);
                     }
                 }
-                break;
 
             case '@unban':
                 const unbanOption = args[1];
@@ -407,7 +432,6 @@ export class ChatService {
                     const userId = args[1];
                     return await this.unbanUser(userId);
                 }
-                break;
             case '@multiple':
                 if (args.length < 2) {
                     return { command: 'ADMIN_ERROR', message: 'Invalid command!', isSuccessful: false };
@@ -425,9 +449,10 @@ export class ChatService {
             case '@bot':
                 const botOption = args[1];
                 if (botOption === 'on') {
-                    // Bật bot @bot on
+                    await this.updateBotStatus();
                     return await this.enableBot();
                 } else if (botOption === 'off') {
+                    await this.updateBotStatus();
                     return await this.disableBot();
                 }
                 break;
@@ -445,6 +470,7 @@ export class ChatService {
                     const adminUserId = args[2];
                     // Thêm admin với adminUserId @admin add <user_id>
                     await this.addAdmin(adminUserId);
+                    await this.updateAdminCache();
                 } else if (adminOption === 'remove') {
                     if (args.length < 3) {
                         return {
@@ -456,6 +482,7 @@ export class ChatService {
                     const adminUserId = args[2];
                     // Xóa admin với adminUserId @admin remove <user_id>
                     await this.removeAdmin(adminUserId);
+                    await this.updateAdminCache();
                 } else if (adminOption === 'list') {
                     // Lấy danh sách admin
                     return await this.showAdminList();
@@ -484,7 +511,6 @@ export class ChatService {
                     message: 'Update data successfully!',
                     isSuccessful: true,
                 };
-                break;
 
             default:
                 return { command: 'ADMIN_ERROR', message: 'Invalid command!', isSuccessful: false };
@@ -500,19 +526,29 @@ export class ChatService {
         const responses: Response[] = [];
         keys.forEach((key: Key) => {
             if (message.toLowerCase().includes(key.value)) {
-                fonts.push(key.font);
-                responses.push(key.response);
+                if (key.font) {
+                    fonts.push(key.font);
+                }
+                if (key.response) {
+                    responses.push(key.response);
+                }
             }
         });
         return {
-            fonts,
+            fonts: (await this.getMultipleDownloadStatus()) ? fonts : [fonts[0]],
             responses,
         };
     }
+
     async checkBanned(senderPsid: string): Promise<{
         ban?: Ban;
         isBanned: boolean;
     }> {
+        if (await this.isAdmin(senderPsid)) {
+            return {
+                isBanned: false,
+            };
+        }
         const ban: Ban = await this.banService.findOneBySenderPsid(senderPsid);
         if (ban) {
             return {
@@ -543,7 +579,7 @@ export class ChatService {
     }
 
     async getBanStatus(): Promise<boolean> {
-        const value = await this.cacheManager.get<boolean>(CacheKey.BAN_STATUS);
+        const value = await this.cacheManager.get<boolean>(KeyEnum.BAN_STATUS);
         if (value) {
             return value;
         }
@@ -551,13 +587,13 @@ export class ChatService {
     }
 
     private async updateBanStatus(): Promise<boolean> {
-        const banStatus = await this.settingService.getValueByKeyBoolean('BAN_STATUS');
-        await this.cacheManager.set(CacheKey.BAN_STATUS, banStatus, 24 * 60 * 60 * 1000);
+        const banStatus = await this.settingService.getValueByKeyBoolean(KeyEnum.BAN_STATUS);
+        await this.cacheManager.set(KeyEnum.BAN_STATUS, banStatus, CACHE_TTL_MILLISECOND);
         return banStatus;
     }
 
     async getFontChunk(chunk = 10): Promise<Font[][]> {
-        const fontChunk = await this.cacheManager.get<Font[][]>(CacheKey.FONT_CHUNK);
+        const fontChunk = await this.cacheManager.get<Font[][]>(KeyEnum.FONT_CHUNK);
         if (fontChunk) {
             return fontChunk;
         }
@@ -566,11 +602,43 @@ export class ChatService {
 
     private async updateFontChunkCache(chunk: number): Promise<Font[][]> {
         const fontChunk = await this.fontService.findChunk(chunk);
-        await this.cacheManager.set(CacheKey.FONT_CHUNK, fontChunk, 24 * 60 * 60 * 1000);
+        await this.cacheManager.set(KeyEnum.FONT_CHUNK, fontChunk, CACHE_TTL_MILLISECOND);
         return fontChunk;
     }
 
     async deleteBanned(senderPsid) {
         await this.banService.deleteBySenderPsid(senderPsid);
+    }
+
+    async getBotStatus(): Promise<boolean> {
+        const value = await this.cacheManager.get<boolean>(KeyEnum.BOT_STATUS);
+        if (value) {
+            return value;
+        }
+        return await this.updateBotStatus();
+    }
+
+    private async updateBotStatus(): Promise<boolean> {
+        const botStatus = await this.settingService.getValueByKeyBoolean(KeyEnum.BOT_STATUS);
+        await this.cacheManager.set(KeyEnum.BOT_STATUS, botStatus, CACHE_TTL_MILLISECOND);
+        return botStatus;
+    }
+
+    private async getMultipleDownloadStatus(): Promise<boolean> {
+        const value = await this.cacheManager.get<boolean>(KeyEnum.MULTIPLE_DOWNLOAD_STATUS);
+        if (value) {
+            return value;
+        }
+        return await this.updateMultipleDownloadStatus();
+    }
+
+    private async updateMultipleDownloadStatus(): Promise<boolean> {
+        const multipleDownloadStatus = await this.settingService.getValueByKeyBoolean(KeyEnum.MULTIPLE_DOWNLOAD_STATUS);
+        await this.cacheManager.set(KeyEnum.MULTIPLE_DOWNLOAD_STATUS, multipleDownloadStatus, CACHE_TTL_MILLISECOND);
+        return multipleDownloadStatus;
+    }
+
+    async isAdmin(senderPsid: string): Promise<boolean> {
+        return (await this.getAdmins()).includes(senderPsid);
     }
 }

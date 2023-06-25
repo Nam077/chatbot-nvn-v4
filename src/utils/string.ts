@@ -1,23 +1,27 @@
 import { UserInformation } from '../modules/messenger/models/bot-messenger';
-import { TimeCurrent } from './time';
+import { getTimeCurrent, TimeCurrent } from './time';
 import slugify from 'slugify';
 
-export const validateMessage = (message: string, userProfile: UserInformation, date: TimeCurrent): string => {
+export const validateMessage = (
+    message: string,
+    userProfile: UserInformation,
+    date: TimeCurrent = getTimeCurrent(),
+): string => {
     const { firstName, lastName, name, profilePic } = userProfile;
     const { hour, minute, second, day, month, year, dateTime } = date;
 
     return message
-        .replaceAll('{{firstName}}', firstName)
-        .replaceAll('{{lastName}}', lastName)
+        .replaceAll('{{first_name}}', firstName)
+        .replaceAll('{{last_name}}', lastName)
         .replaceAll('{{name}}', name)
-        .replaceAll('{{profilePic}}', profilePic)
+        .replaceAll('{{profile_pic}}', profilePic)
         .replaceAll('{{hour}}', hour.toString())
         .replaceAll('{{minute}}', minute.toString())
         .replaceAll('{{second}}', second.toString())
         .replaceAll('{{day}}', day.toString())
         .replaceAll('{{month}}', month.toString())
         .replaceAll('{{year}}', year.toString())
-        .replaceAll('{{dateTime}}', dateTime);
+        .replaceAll('{{date_time}}', dateTime);
 };
 
 export const removeAllSpecialCharacters = (str: string): string => {
@@ -33,4 +37,11 @@ export const slugifyString = (str: string): string => {
         strict: true,
         replacement: '-',
     });
+};
+export const chunkArray = <T>(arr: T[], chunk = 10): T[][] => {
+    const result = [];
+    for (let i = 0, j = arr.length; i < j; i += chunk) {
+        result.push(arr.slice(i, i + chunk));
+    }
+    return result;
 };

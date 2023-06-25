@@ -2,10 +2,13 @@ import { ForbiddenException, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { BotMessenger, CallToAction, Element, PersistentMenu, UserInformation } from './models/bot-messenger';
 import { getTimeCurrent, TimeCurrent } from '../../utils/time';
-import { ChatService } from '../chat/chat.service';
+import { ChatService, DataFromMessage } from '../chat/chat.service';
 import { Button, QuickReply } from '../../common/bot';
 import { CrawDataYoutube } from '../chat/crawler/crawler.service';
 import { Font } from '../font/entities/font.entity';
+import { Response } from '../response/entities/response.entity';
+import { getRanDomBetween } from '../../utils/number';
+import { chunkArray, validateMessage } from '../../utils/string';
 
 export const INTENT_START = ['bắt đầu', 'start', 'restart', 'restart bot', 'khởi động lại', 'khởi động lại'];
 export const COMMANDS_ADMIN = ['@ban', '@unban', '@multiple', '@bot', '@admin', '@token', '@update'];
@@ -16,18 +19,20 @@ enum PAYLOADS {
     BUY_ALL_FONTS = 'BUY_ALL_FONTS',
     VIEW_NEW_FONTS = 'VIEW_NEW_FONTS',
     VIEW_ALL_FONTS = 'VIEW_ALL_FONTS',
-    VIEW_LIST_FONTS_TEXT = 'VIEW_LIST_FONTS_TEXT',
+    VIEW_LIST_TEXT_FONTS = 'VIEW_LIST_TEXT_FONTS',
     VIEW_GUIDE = 'VIEW_GUIDE',
     VIEW_PRICE = 'VIEW_PRICE',
     CONTACT = 'CONTACT',
     TOGGLE_BOT_ON = 'TOGGLE_BOT_ON',
     TOGGLE_BOT_OFF = 'TOGGLE_BOT_OFF',
     GET_STARTED = 'GET_STARTED',
+    LIST_FONT = 'LIST_FONT',
 }
 
 @Injectable()
 export class MessengerService {
     private listOffBan: Set<string> = new Set();
+
     constructor(
         private readonly configService: ConfigService,
         private messengerBot: BotMessenger,
@@ -37,9 +42,11 @@ export class MessengerService {
     private addListOffBan(senderPsid: string) {
         this.listOffBan.add(senderPsid);
     }
+
     private removeListOffBan(senderPsid: string) {
         this.listOffBan.delete(senderPsid);
     }
+
     async getWebHook(mode: string, challenge: string, verifyToken: string) {
         if (mode && verifyToken) {
             if (mode === 'subscribe' && verifyToken === this.configService.get<string>('MESSENGER_VERIFY_TOKEN')) {
@@ -50,37 +57,43 @@ export class MessengerService {
     } //
 
     async postWebHook(body) {
-        const { object, entry } = body;
-        if (object === 'page') {
-            for (const element of entry) {
-                const webhookEvent = element.messaging[0];
-                const senderPsid = webhookEvent.sender.id;
-                if (senderPsid === this.configService.get<string>('MESSENGER_PAGE_ID')) {
-                    return 'EVENT_RECEIVED';
-                }
-                console.log('Sender PSID: ' + senderPsid);
-                if (webhookEvent.message && webhookEvent.message.quick_reply) {
-                    if (await this.checkBan(senderPsid)) {
+        try {
+            const { object, entry } = body;
+            if (object === 'page') {
+                for (const element of entry) {
+                    const webhookEvent = element.messaging[0];
+                    console.log(webhookEvent);
+                    const senderPsid = webhookEvent.sender.id;
+                    if (senderPsid === this.configService.get<string>('MESSENGER_PAGE_ID')) {
                         return 'EVENT_RECEIVED';
                     }
-                    //
-                    return await this.handleQuickReply(senderPsid, webhookEvent.message.quick_reply);
-                }
-                if (webhookEvent.message) {
-                    if (await this.checkBan(senderPsid)) {
-                        return 'EVENT_RECEIVED';
+                    console.log('Sender PSID: ' + senderPsid);
+                    if ((await this.chatService.isAdmin(senderPsid)) || (await this.chatService.getBotStatus())) {
+                        if (webhookEvent.message && webhookEvent.message.quick_reply) {
+                            if (await this.checkBan(senderPsid)) {
+                                return 'EVENT_RECEIVED';
+                            }
+                            return await this.handleQuickReply(senderPsid, webhookEvent.message.quick_reply);
+                        } else if (webhookEvent.message) {
+                            if (await this.checkBan(senderPsid)) {
+                                return 'EVENT_RECEIVED';
+                            }
+                            return await this.handleMessage(senderPsid, webhookEvent.message.text);
+                        } else if (webhookEvent.postback) {
+                            if (await this.checkBan(senderPsid)) {
+                                return 'EVENT_RECEIVED';
+                            }
+                            return await this.handlePostback(senderPsid, webhookEvent.postback);
+                        }
                     }
-                    return await this.handleMessage(senderPsid, webhookEvent.message.text);
-                } else if (webhookEvent.postback) {
-                    if (await this.checkBan(senderPsid)) {
-                        return 'EVENT_RECEIVED';
-                    }
-                    return await this.handlePostback(senderPsid, webhookEvent.postback);
                 }
             }
+            return 'EVENT_RECEIVED';
+        } catch (error) {
+            return;
         }
-        return 'EVENT_RECEIVED';
     }
+
     private async checkBan(senderPsid: string): Promise<boolean> {
         const banned = await this.chatService.checkBanned(senderPsid);
         if (banned.isBanned) {
@@ -95,9 +108,101 @@ export class MessengerService {
         }
         return false;
     }
+    async handleSendFonts(senderPsid: string, userInformation: UserInformation, fonts: Font[]) {
+        if (fonts.length === 1) {
+            return await this.sendSingleFont(senderPsid, userInformation, fonts[0]);
+        }
+        if (fonts.length > 1 && fonts.length <= 10) {
+            return await this.sendMultipleFonts(senderPsid, userInformation, fonts);
+        }
+        if (fonts.length > 10) {
+            return await this.sendMultipleFontsText(senderPsid, userInformation, fonts);
+        }
+    }
+
+    async sendMultipleFontsText(senderPsid: string, userInformation: UserInformation, fonts: Font[]) {
+        const fontChunks: Font[][] = chunkArray<Font>(fonts, 20);
+        for (const fontChunk of fontChunks) {
+            const message = fontChunk
+                .map((font) => {
+                    return `Tên font: ${font.name}\nLink tải:\n${this.getLinkDownload(font)}`;
+                })
+                .join('\n');
+            await this.messengerBot.sendTextMessage(senderPsid, message);
+        }
+    }
+    async sendSingleFont(senderPsid: string, userInformation: UserInformation, font: Font) {
+        await this.messengerBot.sendImageMessage(
+            senderPsid,
+            font.images.length > 0
+                ? font.images[getRanDomBetween(0, font.images.length - 1)].url
+                : this.configService.get('BACKUP_IMAGE_URL'),
+        );
+        await this.sendOneFont(senderPsid, userInformation, font);
+    }
+    async sendOneFont(senderPsid: string, userInformation: UserInformation, font: Font) {
+        const tempMessage =
+            font.messages.length > 0
+                ? validateMessage(font.messages[getRanDomBetween(0, font.messages.length - 1)].value, userInformation)
+                : font.name;
+
+        const message = `Chào ${userInformation.name}\nTôi đã nhận được yêu cầu của bạn\nTên font: ${
+            font.name
+        } \nLink tải:\n\n${this.getLinkDownload(font)}\n${tempMessage}`;
+        const buttons: Button[] = [];
+        for (let i = 0; i < font.links.length && i < 3; i++) {
+            buttons.push({
+                type: 'web_url',
+                url: font.links.length > 0 ? font.links[i].url : font.urlPost,
+                title: 'Tải font',
+            });
+        }
+        buttons.push({
+            type: 'postback',
+            title: 'Xem thêm font khác',
+            payload: PAYLOADS.LIST_FONT,
+        });
+        await this.messengerBot.sendButtonMessage(senderPsid, message, buttons);
+    }
+    getLinkDownload(font: Font): string {
+        let linkDownload = '';
+        for (let i = 0; i < font.links.length && i < 3; i++) {
+            linkDownload += font.links[i].url + '\n';
+        }
+        return linkDownload;
+    }
+    async sendMultipleFonts(senderPsid: string, userInformation: UserInformation, fonts: Font[]) {
+        await this.sendListFontGeneric(senderPsid, userInformation, fonts, 'web_url');
+    }
+    private async handleSendResponses(senderPsid: string, userInformation: UserInformation, responses: Response[]) {
+        const response = responses[getRanDomBetween(0, responses.length - 1)];
+        if (response.messages.length > 0) {
+            const message = validateMessage(
+                response.messages[getRanDomBetween(0, response.messages.length - 1)].value,
+                userInformation,
+            );
+            await this.messengerBot.sendTextMessage(senderPsid, message);
+        }
+        if (response.images.length > 0) {
+            await this.messengerBot.sendImageMessage(
+                senderPsid,
+                response.images[getRanDomBetween(0, response.images.length - 1)].url,
+            );
+        }
+    }
+
     private async handleMessage(senderPsid: string, message) {
         const time: TimeCurrent = getTimeCurrent('Asia/Ho_Chi_Minh');
         const userInformation: UserInformation = await this.messengerBot.getUserProfile(senderPsid);
+        const dataFromMessage: DataFromMessage = await this.chatService.getDataFromMessage(message);
+        if (dataFromMessage) {
+            if (dataFromMessage.fonts.length > 0) {
+                return await this.handleSendFonts(senderPsid, userInformation, dataFromMessage.fonts);
+            } else if (dataFromMessage.responses.length > 0) {
+                return await this.handleSendResponses(senderPsid, userInformation, dataFromMessage.responses);
+            }
+        }
+
         INTENT_START.forEach((intent) => {
             if (message.toLowerCase().includes(intent)) {
                 return this.sendStartMessage(senderPsid, userInformation);
@@ -114,7 +219,6 @@ export class MessengerService {
                 await this.sendYoutubeMessage(senderPsid, data);
             }
         }
-        return await this.toggleBot(senderPsid, userInformation);
     }
 
     private readonly sendYoutubeMessage = async (senderPsid: string, data: CrawDataYoutube[]) => {
@@ -138,6 +242,7 @@ export class MessengerService {
         });
         await this.messengerBot.sendGenericMessage(senderPsid, elements);
     };
+
     private async handleAdminCommand(senderPsid: string, message: string) {
         const result = await this.chatService.adminFunctions(message);
         if (result.command === 'BAN') {
@@ -191,10 +296,11 @@ export class MessengerService {
 
     private async handlePostback(senderPsid: string, postback) {
         const userInformation: UserInformation = await this.messengerBot.getUserProfile(senderPsid);
-        if (postback.includes('LIST_FONT')) {
-            return await this.handleListFont(senderPsid, postback, userInformation);
+        const payload = postback.payload;
+        if (payload.includes(PAYLOADS.LIST_FONT)) {
+            return await this.handleListFont(senderPsid, payload, userInformation);
         }
-        switch (postback.payload) {
+        switch (payload) {
             case PAYLOADS.RESTART_BOT:
                 return await this.sendStartMessage(senderPsid, userInformation);
             case PAYLOADS.TOGGLE_BOT:
@@ -205,14 +311,14 @@ export class MessengerService {
                 return await this.viewNewFonts(senderPsid, userInformation);
             case PAYLOADS.VIEW_ALL_FONTS:
                 return await this.viewAllFonts(senderPsid, userInformation);
-            case PAYLOADS.VIEW_LIST_FONTS_TEXT:
+            case PAYLOADS.VIEW_LIST_TEXT_FONTS:
                 return await this.viewListFontsText(senderPsid, userInformation);
             case PAYLOADS.VIEW_GUIDE:
                 return await this.viewGuide(senderPsid, userInformation);
             case PAYLOADS.VIEW_PRICE:
                 return await this.viewPrice(senderPsid, userInformation);
             case PAYLOADS.CONTACT:
-                return await this.contact(senderPsid, userInformation);
+                return await this.sendContact(senderPsid, userInformation);
             case PAYLOADS.GET_STARTED:
                 return await this.sendStartMessage(senderPsid, userInformation);
             default:
@@ -228,62 +334,62 @@ export class MessengerService {
         const callToActions: CallToAction[] = [
             {
                 type: 'postback',
-                payload: 'RESTART_BOT',
+                payload: PAYLOADS.RESTART_BOT,
                 title: '🔄 Khởi động lại bot',
             },
             {
                 // tắt bot
                 type: 'postback',
                 title: '🔕 Tắt bot',
-                payload: 'TOGGLE_BOT',
+                payload: PAYLOADS.TOGGLE_BOT,
             },
             {
                 // mua tổng hợp font
                 type: 'postback',
                 title: '🛒 Mua tổng hợp font',
-                payload: 'BUY_ALL_FONTS',
+                payload: PAYLOADS.BUY_ALL_FONTS,
             },
             {
                 // xem các font mới nhất
                 type: 'postback',
                 title: '🔥 Xem các font mới nhất',
-                payload: 'VIEW_NEW_FONTS',
+                payload: PAYLOADS.VIEW_NEW_FONTS,
             },
             {
                 // Danh sách các font
                 type: 'postback',
                 title: '📜 Danh sách các font',
-                payload: 'VIEW_ALL_FONTS',
+                payload: PAYLOADS.VIEW_LIST_TEXT_FONTS,
             },
             {
                 // Xem demo danh sách font
                 type: 'postback',
-                title: '📜 Xem demo danh sách font',
-                payload: 'VIEW_DEMO_FONTS',
+                title: '📜 Xem font có ảnh minh họa',
+                payload: PAYLOADS.LIST_FONT,
+            },
+            {
+                // Hướng dẫn sử dụng
+                type: 'postback',
+                title: '📖 Hướng dẫn sử dụng',
+                payload: PAYLOADS.VIEW_GUIDE,
+            },
+            {
+                // Xem giá việt hóa
+                type: 'postback',
+                title: '💰 Xem giá việt hóa',
+                payload: PAYLOADS.VIEW_PRICE,
+            },
+            {
+                // Liên hệ
+                type: 'postback',
+                title: '📞 Liên hệ',
+                payload: PAYLOADS.CONTACT,
             },
             {
                 // Tham gia nhóm
                 type: 'web_url',
                 title: '👥 Tham gia nhóm',
                 url: 'https://www.facebook.com/groups/nvnfont',
-            },
-            {
-                // Hướng dẫn sử dụng
-                type: 'postback',
-                title: '📖 Hướng dẫn sử dụng',
-                payload: 'VIEW_GUIDE',
-            },
-            {
-                // Xem giá việt hóa
-                type: 'postback',
-                title: '💰 Xem giá việt hóa',
-                payload: 'VIEW_PRICE',
-            },
-            {
-                // Liên hệ
-                type: 'postback',
-                title: '📞 Liên hệ',
-                payload: 'CONTACT',
             },
         ];
         return {
@@ -292,6 +398,7 @@ export class MessengerService {
             call_to_actions: callToActions,
         };
     }
+
     private async sendStartMessage(senderPsid: string, userInformation: UserInformation) {
         await this.messengerBot.sendTextMessage(senderPsid, senderPsid);
         const timeCurrent: TimeCurrent = getTimeCurrent('Asia/Ho_Chi_Minh');
@@ -329,7 +436,7 @@ export class MessengerService {
         const isBotOff: boolean = this.listOffBan.has(senderPsid);
         const quickReply: QuickReply = {
             payload: `TOGGLE_BOT_${isBotOff ? 'ON' : 'OFF'}`,
-            title: isBotOff ? '🟢Bật bot' : '🔴Tắt bot',
+            title: isBotOff ? '🟢 Bật bot' : '🔴 Tắt bot',
             content_type: 'text',
         };
         const message = `Bot hiện tại đã ${isBotOff ? 'tắt' : 'bật'}\n${userInformation.name} có muốn ${
@@ -339,30 +446,33 @@ export class MessengerService {
     }
 
     private async buyAllFonts(senderPsid: string, userInformation: UserInformation) {
-        const message = `Hiện tại mình đang giảm giá bộ 600 font \n\nDùng cho cá nhân: 300k\n\n Dùng cho doanh nghiệp: 500k\n\nBạn có muốn mua không?`;
+        const message = `Hiện tại mình đang giảm giá bộ 600 font\n\nDùng cho cá nhân: 300k\n\nDùng cho từ 2 người trở lên: 500k\n\n`;
         await this.messengerBot.sendTextMessage(senderPsid, message);
-        await this.contact(senderPsid, userInformation);
+        await this.sendContact(senderPsid, userInformation);
     }
 
-    private async contact(senderPsid: string, userInformation: UserInformation) {
-        const message = `${userInformation.name} có thể liên hệ với admin qua các kênh sau:\nFacebook: m.me/nam077.me\n\nZalo: 0337994575\n\nEmail:nam077.me@gmail.com\n\nSố điện thoại: 0337994575`;
+    private async sendContact(senderPsid: string, userInformation: UserInformation) {
+        const message = `${userInformation.name} có thể liên hệ với admin qua các kênh sau:\nFacebook: m.me/nam077.me\n\nZalo: 0337994575\n\nEmail: nam077.me@gmail.com\n\nSố điện thoại: 0337994575`;
         await this.messengerBot.sendTextMessage(senderPsid, message);
     }
 
     private async viewPrice(senderPsid: string, userInformation: UserInformation) {
-        const message = `Hiện tại bên mình đang nhận việt hoá font với giá như sau:\n\nFont có số lượng weight < 10: 70.000đ - 100.000đ \n\nFont có số lượng weight >= 10: 60.000đ - 100.000đ\n\nFont có số lượng weight >= 20: 50.000đ - 100.000đ\n\nFont có số lượng weight >= 30: 40.000đ - 100.000đ\n\nFont có số lượng weight >= 40: 30.000đ - 100.000đ\n\nFont có số lượng weight >= 50: 20.000đ - 100.000đ\n\nFont có số lượng weight >= 60: 10.000đ - 100.000đ\n\nFont có số lượng weight >= 70: 5.000đ - 100.000đ\n\nFont có số lượng weight >= 80: 1.000đ - 100.000đ\n\nFont có số lượng weight >= 90: 500đ - 100.000đ\n\nFont có số lượng weight >= 100: 100đ - 100.000đ\n\nNếu ${userInformation.name} có nhu cầu việt hoá font`;
+        const message = `Hiện tại bên mình đang nhận việt hoá font với giá như sau:\n\nFont có số lượng weight < 10: 70.000đ - 100.000đ \n\nFont có số lượng weight >= 10: 60.000đ - 100.000đ`;
         await this.messengerBot.sendTextMessage(senderPsid, message);
-        await this.contact(senderPsid, userInformation);
+        await this.sendContact(senderPsid, userInformation);
     }
 
-    private async viewListFontsText(senderPsid: string, userInformation: UserInformation) {
+    async viewListFontsText(senderPsid: string, userInformation: UserInformation) {
         const fontTexts: string[][] = await this.chatService.getFontChunkString();
         await this.sendListFontsText(senderPsid, userInformation, fontTexts);
+        return 'done';
     }
+
     private async sendListFontsText(senderPsid: string, userInformation: UserInformation, fontTexts: string[][]) {
-        for (const fontText of fontTexts) {
-            await this.messengerBot.sendTextMessage(senderPsid, fontText.join('\n\n'));
-        }
+        await this.messengerBot.sendMultipleTextMessage(
+            senderPsid,
+            fontTexts.map((item) => item.join('\n\n')),
+        );
         const message = 'Để tải font bạn hãy chọn một font và gửi tên font đó cho admin nhé!';
         await this.messengerBot.sendTextMessage(senderPsid, message);
         await this.messengerBot.sendTextMessage(
@@ -371,6 +481,7 @@ export class MessengerService {
                 fontTexts[0][0] || 'NVN Parka'
             }"`,
         );
+        return 'done';
     }
 
     private async viewAllFonts(senderPsid: string, userInformation: UserInformation) {
@@ -381,6 +492,7 @@ export class MessengerService {
         const fonts: Font[][] = await this.chatService.getFontChunk();
         await this.sendNewFonts(senderPsid, userInformation, fonts);
     }
+
     private async sendNewFonts(senderPsid: string, userInformation: UserInformation, fonts: Font[][]) {
         const newFonts: Font[] = fonts[fonts.length - 1];
         await this.sendListFontGeneric(senderPsid, userInformation, newFonts);
@@ -396,11 +508,12 @@ export class MessengerService {
             return {
                 title: font.name,
                 image_url:
-                    font.images[Math.floor(Math.random() * font.images.length)].url ||
-                    'https://i.ibb.co/HB5YtcD/242064584-376039017519810-9165860114478955115-n.jpg',
+                    font.images.length > 0
+                        ? font.images[Math.floor(Math.random() * font.images.length)].url
+                        : this.configService.get('BACKUP_IMAGE_URL'),
                 default_action: {
                     type: 'web_url',
-                    url: font.urlPost,
+                    url: font.urlPost !== '' ? font.urlPost : this.configService.get('FAN_PAGE_URL'),
                     webview_height_ratio: 'tall',
                 },
                 buttons: type === 'postback' ? this.getButtonPostbackFont(font) : this.getButtonUrlFont(font),
@@ -408,15 +521,17 @@ export class MessengerService {
         });
         await this.messengerBot.sendGenericMessage(senderPsid, elements);
     }
+
     getButtonPostbackFont(font: Font): Button[] {
         return [
             {
                 payload: font.keys ? font.keys[Math.floor(Math.random() * font.keys.length)].value : font.name,
-                title: 'Tải font',
+                title: 'Tải Xuống',
                 type: 'postback',
             },
         ];
     }
+
     getButtonUrlFont(font: Font): Button[] {
         const buttons: Button[] = [];
         for (let i = 0; i < font.links.length && i < 3; i++) {
@@ -429,16 +544,41 @@ export class MessengerService {
         return buttons;
     }
 
-    private async handleListFont(senderPsid: string, postback, userInformation: UserInformation) {
+    private async handleListFont(senderPsid: string, payload: string, userInformation: UserInformation) {
         let page = 1;
-        if (postback.include('PAGE')) {
-            page = parseInt(postback.replace('LIST_FONT_PAGE_', ''));
+        if (payload.includes('LIST_FONT_PAGE_')) {
+            page = parseInt(payload.replace('LIST_FONT_PAGE_', ''));
         }
-        return this.sendListFont(senderPsid, userInformation, page);
+        return await this.sendListFont(senderPsid, userInformation, page);
     }
 
-    private sendListFont(senderPsid: string, userInformation: UserInformation, page: number) {
-        return Promise.resolve(undefined);
+    private async sendListFont(senderPsid: string, userInformation: UserInformation, page: number) {
+        const fonts: Font[][] = await this.chatService.getFontChunk();
+        await this.sendListFontGeneric(senderPsid, userInformation, fonts[page - 1], 'postback');
+        if (page + 1 <= fonts.length) {
+            await this.sendButtonNext(senderPsid, userInformation, page, fonts.length);
+        }
+    }
+
+    private async sendButtonNext(
+        senderPsid: string,
+        userInformation: UserInformation,
+        page: number,
+        totalPage: number,
+    ) {
+        const buttons: Button[] = [];
+        if (page <= totalPage) {
+            buttons.push({
+                title: 'Trang sau',
+                type: 'postback',
+                payload: 'LIST_FONT_PAGE_' + (page + 1),
+            });
+        }
+        if (buttons.length > 0) {
+            await this.messengerBot.sendButtonMessage(senderPsid, 'Bạn muốn xem trang nào?', buttons);
+        } else {
+            await this.messengerBot.sendTextMessage(senderPsid, 'Đây là trang cuối cùng rồi nhé!');
+        }
     }
 
     private async sendQuickReplyStart(senderPsid: string) {
@@ -446,36 +586,37 @@ export class MessengerService {
             {
                 content_type: 'text',
                 title: '🔥 Xem các font mới nhất',
-                payload: 'VIEW_NEW_FONTS',
+                payload: PAYLOADS.VIEW_NEW_FONTS,
             },
             {
                 content_type: 'text',
                 title: '📜 Danh sách các font',
-                payload: 'VIEW_ALL_FONTS',
+                payload: PAYLOADS.VIEW_LIST_TEXT_FONTS,
             },
             {
                 content_type: 'text',
-                title: '📜 Xem demo danh sách font',
-                payload: 'VIEW_DEMO_FONTS',
+                title: '📜 Xem font có ảnh minh họa',
+                payload: PAYLOADS.LIST_FONT,
             },
             {
                 content_type: 'text',
                 title: '📖 Hướng dẫn sử dụng',
-                payload: 'VIEW_GUIDE',
+                payload: PAYLOADS.VIEW_GUIDE,
             },
             {
                 content_type: 'text',
                 title: '💰 Xem giá việt hóa',
-                payload: 'VIEW_PRICE',
+                payload: PAYLOADS.VIEW_PRICE,
             },
             {
                 content_type: 'text',
                 title: '📞 Liên hệ',
-                payload: 'CONTACT',
+                payload: PAYLOADS.CONTACT,
             },
         ];
         return this.messengerBot.sendQuickReply(senderPsid, 'Bạn muốn làm gì?', quickReplies);
     }
+
     private async viewGuide(senderPsid: string, userInformation: UserInformation) {
         const string =
             `Chào ${userInformation.name}!\n` +
@@ -536,5 +677,10 @@ export class MessengerService {
             `Ví dụ: Địa lý Việt Nam có bao nhiêu tỉnh ?\n` +
             `-------------------------\n`;
         return await this.messengerBot.sendTextMessage(senderPsid, string);
+    }
+    async setUpPersistentMenu() {
+        const persistentMenu: PersistentMenu = this.getPersistentMenu();
+        await this.messengerBot.setPersistentMenu([persistentMenu]);
+        return `Set up persistent menu success`;
     }
 }

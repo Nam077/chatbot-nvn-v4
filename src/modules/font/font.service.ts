@@ -180,7 +180,7 @@ export class FontService {
         return chunkedFonts;
     }
 
-    async findChunkGetString(chunkSize = 20): Promise<string[][]> {
+    async findChunkGetString(chunkSize = 50): Promise<string[][]> {
         const chunkedFonts = await this.findChunk(chunkSize);
         return chunkedFonts.map((chunk) => chunk.map((font) => font.name));
     }

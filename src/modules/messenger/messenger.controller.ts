@@ -25,4 +25,17 @@ export class MessengerController {
     postWebHook(@Body() body) {
         return this.messengerService.postWebHook(body);
     }
+    @Get('/set-up-persistent-menu')
+    @ApiOperation({ summary: 'Setup persistent menu' })
+    @IsPublic()
+    setUpPersistentMenu() {
+        return this.messengerService.setUpPersistentMenu();
+    }
+
+    @Get('/test')
+    @ApiOperation({ summary: 'Test' })
+    @IsPublic()
+    test() {
+        return this.messengerService.viewListFontsText('4992027270808835', null);
+    }
 }
