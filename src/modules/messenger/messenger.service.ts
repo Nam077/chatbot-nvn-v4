@@ -1,6 +1,6 @@
 import { ForbiddenException, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { BotMessenger, CallToAction, Element, PersistentMenu, UserInformation } from './models/bot-messenger';
+import { BotMessenger, CallToAction, Element, Greeting, PersistentMenu, UserInformation } from './models/bot-messenger';
 import { getTimeCurrent, TimeCurrent } from '../../utils/time';
 import { ChatService, DataFromMessage } from '../chat/chat.service';
 import { Button, QuickReply } from '../../common/bot';
@@ -772,5 +772,34 @@ export class MessengerService {
         await this.messengerBot.sendTextMessage(senderPsid, food.description);
         await this.messengerBot.sendTextMessage(senderPsid, food.recipe);
         return;
+    }
+
+    async updatePageAccessToken(token: string) {
+        this.messengerBot.pageAccessToken = token;
+        await this.chatService.updatePageAccessToken(token);
+        return `Update page access token success`;
+    }
+
+    async setUpGetStartedButton() {
+        await this.setGetStartedButton(PAYLOADS.GET_STARTED);
+        return `Set up get started button success`;
+    }
+
+    private async setGetStartedButton(GET_STARTED: PAYLOADS) {
+        const greetings: Greeting[] = [
+            {
+                locale: 'default',
+                text: 'Xin chào bạn đã đến với NVN Font! bạn có thể gửi tin nhắn cho NVN Font để sử dụng bot một cách miễn phí!',
+            },
+            {
+                locale: 'vi_VN',
+                text: 'Xin chào bạn đã đến với NVN Font! bạn có thể gửi tin nhắn cho NVN Font để sử dụng bot một cách miễn phí!',
+            },
+            {
+                locale: 'en_US',
+                text: 'Hello, you have come to NVN Font! you can send a message to NVN Font to use the bot for free!',
+            },
+        ];
+        await this.messengerBot.setGetStartedButton(GET_STARTED, greetings);
     }
 }

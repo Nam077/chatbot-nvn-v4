@@ -10,9 +10,9 @@ import { RoleGuard } from '../auth/guards/role.guard';
 export class ChatController {
     constructor(private readonly chatService: ChatService) {}
 
-    @Get('/test')
-    test(@Query('key') key: string) {
-        return this.chatService.getFontChunk();
+    @Get('/update-data')
+    updateData() {
+        return this.chatService.updateDataFromGoogleSheet();
     }
 
     @Get('/test2')

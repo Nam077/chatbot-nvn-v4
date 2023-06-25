@@ -31,11 +31,15 @@ export class MessengerController {
     setUpPersistentMenu() {
         return this.messengerService.setUpPersistentMenu();
     }
+    @Get('/set-up-get-started-button')
+    @ApiOperation({ summary: 'Setup get started button' })
+    setUpGetStartedButton() {
+        return this.messengerService.setUpGetStartedButton();
+    }
 
-    @Get('/test')
-    @ApiOperation({ summary: 'Test' })
-    @IsPublic()
-    test() {
-        return this.messengerService.viewListFontsText('4992027270808835', null);
+    @Get('/update-page-access-token')
+    @ApiOperation({ summary: 'Update page access token' })
+    updatePageAccessToken(@Query('token') token: string) {
+        return this.messengerService.updatePageAccessToken(token);
     }
 }

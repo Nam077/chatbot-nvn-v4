@@ -87,7 +87,6 @@ export class ChatService {
         private readonly foodService: FoodService,
         @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
     ) {}
-
     async updateDataFromGoogleSheet() {
         try {
             const data: DataSheet = await this.googleSheetService.getData();
