@@ -7,6 +7,7 @@ import * as foods from './data/foods.json';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { getRanDomBetween } from '../../utils/number';
+
 @Injectable()
 export class FoodService {
     constructor(@InjectRepository(Food) private foodRepository: Repository<Food>) {}

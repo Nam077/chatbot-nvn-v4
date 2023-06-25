@@ -219,7 +219,7 @@ export class MessengerService {
         });
         FOOD_COMMANDS.forEach((command) => {
             if (message.toLowerCase().includes(command)) {
-                return this.handleFoodReCommand(senderPsid, userInformation);
+                return this.handleFoodRecommend(senderPsid, userInformation);
             }
         });
 
@@ -761,11 +761,11 @@ export class MessengerService {
         return `Set up persistent menu success`;
     }
 
-    private async handleFoodReCommand(senderPsid: string, userProfile: UserInformation) {
+    private async handleFoodRecommend(senderPsid: string, userProfile: UserInformation) {
         const food: Food = await this.chatService.getRandomFood();
         await this.messengerBot.sendTextMessage(
             senderPsid,
-            `Chào ${userProfile.name}, mình gợi ý cho bạn món ăn ngon nhé`,
+            `Chào ${userProfile.name}, món ăn mà tôi đề xuất cho bạn là:`,
         );
         await this.messengerBot.sendImageMessage(senderPsid, food.image);
         await this.messengerBot.sendTextMessage(senderPsid, food.name);
