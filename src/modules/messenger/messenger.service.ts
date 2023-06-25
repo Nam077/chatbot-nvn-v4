@@ -239,7 +239,6 @@ export class MessengerService {
             return;
         } else {
             const crawlerGoogles: CrawDataGoogle[] = await this.chatService.crawlerFromGoogleSearch(message);
-            console.log(crawlerGoogles);
             if (crawlerGoogles.length > 0) {
                 const crawlerGoogle = crawlerGoogles[0];
                 if (typeof crawlerGoogle.data === 'string') {
