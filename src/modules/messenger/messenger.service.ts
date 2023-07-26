@@ -603,8 +603,9 @@ export class MessengerService {
         fonts: Font[],
         type: TYPE_BUTTON_FONTS = 'postback',
     ) {
-        const elements: Element[] = fonts.map((font) => {
-            return {
+        const elements: Element[] = [];
+        for (const font of fonts) {
+            const element: Element = {
                 title: font.name,
                 image_url:
                     font.images.length > 0
@@ -615,29 +616,48 @@ export class MessengerService {
                     url: font.urlPost !== '' ? font.urlPost : this.configService.get('FAN_PAGE_URL'),
                     webview_height_ratio: 'tall',
                 },
-                buttons: type === 'postback' ? this.getButtonPostbackFont(font) : this.getButtonUrlFont(font),
+                buttons:
+                    type === 'postback'
+                        ? await this.getButtonPostbackFont(font, senderPsid)
+                        : await this.getButtonUrlFont(font, senderPsid),
             };
-        });
+            elements.push(element);
+        }
         await this.messengerBot.sendGenericMessage(senderPsid, elements);
     }
 
-    getButtonPostbackFont(font: Font): Button[] {
-        return [
+    async getButtonPostbackFont(font: Font, senderPsid: string): Promise<Button[]> {
+        const buttons: Button[] = [
             {
                 payload: font.keys ? font.keys[Math.floor(Math.random() * font.keys.length)].value : font.name,
                 title: 'Tải Xuống',
                 type: 'postback',
             },
         ];
+        if (await this.chatService.isAdmin(senderPsid)) {
+            buttons.push({
+                type: 'postback',
+                title: 'Cập nhật trạng thái',
+                payload: PAYLOADS.UPDATE_FONT_STATUS + font.id,
+            });
+        }
+        return buttons;
     }
 
-    getButtonUrlFont(font: Font): Button[] {
+    async getButtonUrlFont(font: Font, senderPsid: string): Promise<Button[]> {
         const buttons: Button[] = [];
         for (let i = 0; i < font.links.length && i < 3; i++) {
             buttons.push({
                 type: 'web_url',
                 url: font.links[i].url,
                 title: 'Link ' + (i + 1),
+            });
+        }
+        if (await this.chatService.isAdmin(senderPsid)) {
+            buttons.push({
+                type: 'postback',
+                title: 'Cập nhật trạng thái',
+                payload: PAYLOADS.UPDATE_FONT_STATUS + font.id,
             });
         }
         return buttons;
