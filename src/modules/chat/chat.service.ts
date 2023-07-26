@@ -23,7 +23,7 @@ import { AdminService } from '../admin/admin.service';
 import { Admin } from '../admin/entities/admin.entity';
 import { removeExtraSpaces } from '../../utils/string';
 import { Response } from '../response/entities/response.entity';
-import { Font } from '../font/entities/font.entity';
+import { Font, FontStatus } from '../font/entities/font.entity';
 import { getTimeCurrent, TimeCurrent } from '../../utils/time';
 import { FoodService } from '../food/food.service';
 import { Food } from '../food/entities/food.entity';
@@ -528,7 +528,10 @@ export class ChatService {
         }
     }
 
-    async getDataFromMessage(message: string): Promise<{
+    async getDataFromMessage(
+        message: string,
+        isAdmin?: boolean,
+    ): Promise<{
         fonts: Font[];
         responses: Response[];
     }> {
@@ -538,7 +541,9 @@ export class ChatService {
         keys.forEach((key: Key) => {
             if (message.toLowerCase().includes(key.value)) {
                 if (key.font) {
-                    fonts.push(key.font);
+                    if (key.font.status === FontStatus.ACTIVE || isAdmin === true) {
+                        fonts.push(key.font);
+                    }
                 }
                 if (key.response) {
                     responses.push(key.response);
@@ -546,7 +551,12 @@ export class ChatService {
             }
         });
         return {
-            fonts: (await this.getMultipleDownloadStatus()) ? fonts : fonts.length > 0 ? [fonts[0]] : [],
+            fonts:
+                (await this.getMultipleDownloadStatus()) || isAdmin === true
+                    ? fonts
+                    : fonts.length > 0
+                    ? [fonts[0]]
+                    : [],
             responses,
         };
     }

@@ -5,7 +5,7 @@ import { getTimeCurrent, TimeCurrent } from '../../utils/time';
 import { ChatService, DataFromMessage } from '../chat/chat.service';
 import { Button, QuickReply } from '../../common/bot';
 import { CrawDataGoogle, CrawDataYoutube } from '../chat/crawler/crawler.service';
-import { Font } from '../font/entities/font.entity';
+import { Font, FontStatus } from '../font/entities/font.entity';
 import { Response } from '../response/entities/response.entity';
 import { getRanDomBetween } from '../../utils/number';
 import { chunkArray, validateMessage } from '../../utils/string';
@@ -206,7 +206,10 @@ export class MessengerService {
     private async handleMessage(senderPsid: string, message) {
         const time: TimeCurrent = getTimeCurrent('Asia/Ho_Chi_Minh');
         const userInformation: UserInformation = await this.messengerBot.getUserProfile(senderPsid);
-        const dataFromMessage: DataFromMessage = await this.chatService.getDataFromMessage(message);
+        const dataFromMessage: DataFromMessage = await this.chatService.getDataFromMessage(
+            message,
+            await this.chatService.isAdmin(senderPsid),
+        );
         if (dataFromMessage.fonts.length > 0 || dataFromMessage.responses.length > 0) {
             if (dataFromMessage.fonts.length > 0) {
                 return await this.handleSendFonts(senderPsid, userInformation, dataFromMessage.fonts);
