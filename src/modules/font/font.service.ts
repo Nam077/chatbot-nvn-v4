@@ -3,7 +3,7 @@ import { CreateFontDto } from './dto/create-font.dto';
 import { UpdateFontDto } from './dto/update-font.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Font } from './entities/font.entity';
+import { Font, FontStatus } from './entities/font.entity';
 import { KeyService } from '../key/key.service';
 import { TagService } from '../tag/tag.service';
 import { MessageService } from '../message/message.service';
@@ -146,6 +146,29 @@ export class FontService {
         }
         await this.fontRepository.save(font);
         return font;
+    }
+
+    async updateStatus(id: number): Promise<{ isSuccess: boolean; font: Font }> {
+        const font = await this.findOne(id);
+        if (!font) {
+            return {
+                isSuccess: false,
+                font: null,
+            };
+        }
+        font.status = font.status === FontStatus.ACTIVE ? FontStatus.INACTIVE : FontStatus.ACTIVE;
+        try {
+            const updateFont = await this.fontRepository.save(font);
+            return {
+                isSuccess: true,
+                font: updateFont,
+            };
+        } catch (e) {
+            return {
+                isSuccess: false,
+                font: null,
+            };
+        }
     }
 
     async remove(id: number) {

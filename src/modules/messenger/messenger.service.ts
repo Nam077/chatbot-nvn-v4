@@ -29,6 +29,7 @@ enum PAYLOADS {
     TOGGLE_BOT_OFF = 'TOGGLE_BOT_OFF',
     GET_STARTED = 'GET_STARTED',
     LIST_FONT = 'LIST_FONT',
+    UPDATE_FONT_STATUS = 'UPDATE_FONT_STATUS',
 }
 
 @Injectable()
@@ -166,6 +167,13 @@ export class MessengerService {
             title: 'Xem thêm font khác',
             payload: PAYLOADS.LIST_FONT,
         });
+        if (await this.chatService.isAdmin(senderPsid)) {
+            buttons.push({
+                type: 'postback',
+                title: 'Cập nhật trạng thái',
+                payload: PAYLOADS.UPDATE_FONT_STATUS + font.id,
+            });
+        }
         await this.messengerBot.sendButtonMessage(senderPsid, message, buttons);
     }
     getLinkDownload(font: Font): string {
@@ -338,6 +346,9 @@ export class MessengerService {
         const payload = postback.payload;
         if (payload.includes(PAYLOADS.LIST_FONT)) {
             return await this.handleListFont(senderPsid, payload, userInformation);
+        }
+        if (payload.includes(PAYLOADS.UPDATE_FONT_STATUS)) {
+            return await this.handleUpdateFontStatus(senderPsid, payload, userInformation);
         }
 
         switch (payload) {
@@ -814,5 +825,22 @@ export class MessengerService {
             },
         ];
         await this.messengerBot.setGetStartedButton(GET_STARTED, greetings);
+    }
+
+    private async handleUpdateFontStatus(senderPsid: string, payload: any, userInformation: UserInformation) {
+        const fontId: string = payload.replaceAll(PAYLOADS.UPDATE_FONT_STATUS, '');
+        if (!fontId) {
+            await this.messengerBot.sendTextMessage(senderPsid, `Bạn chưa nhập mã font`);
+            return;
+        }
+        const { isSuccess, font } = await this.chatService.updateStatusFont(+fontId);
+        if (isSuccess) {
+            await this.messengerBot.sendTextMessage(
+                senderPsid,
+                `Cập nhật thành công trạng thái font ${font.name} thành ${font.status}`,
+            );
+        } else {
+            await this.messengerBot.sendTextMessage(senderPsid, `Cập nhật thất bại`);
+        }
     }
 }

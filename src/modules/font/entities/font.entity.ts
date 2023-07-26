@@ -15,6 +15,11 @@ import { Message } from '../../message/entities/message.entity';
 import { Image } from '../../image/entities/image.entity';
 import { Tag } from '../../tag/entities/tag.entity';
 
+export enum FontStatus {
+    ACTIVE = 'active',
+    INACTIVE = 'inactive',
+}
+
 @Entity({ name: 'fonts' })
 export class Font {
     @PrimaryGeneratedColumn({
@@ -53,6 +58,16 @@ export class Font {
         comment: 'Font slug',
     })
     slug: string;
+
+    @Column({
+        name: 'status',
+        type: 'varchar',
+        enum: [FontStatus.ACTIVE, FontStatus.INACTIVE],
+        nullable: false,
+        default: 'active',
+        comment: 'Font status',
+    })
+    status: FontStatus;
 
     @Column({
         name: 'description',

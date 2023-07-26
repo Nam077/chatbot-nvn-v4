@@ -656,4 +656,8 @@ export class ChatService {
     async getRandomFood(): Promise<Food> {
         return await this.foodService.getRandomFood();
     }
+
+    async updateStatusFont(fontId: number) {
+        return await this.fontService.updateStatus(fontId);
+    }
 }
