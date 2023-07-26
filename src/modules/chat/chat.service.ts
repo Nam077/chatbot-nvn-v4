@@ -668,6 +668,11 @@ export class ChatService {
     }
 
     async updateStatusFont(fontId: number) {
-        return await this.fontService.updateStatus(fontId);
+        const results = await this.fontService.updateStatus(fontId);
+        const { isSuccess, font } = results;
+        if (isSuccess) {
+            return await this.updateKeyCache();
+        }
+        return results;
     }
 }
