@@ -146,7 +146,7 @@ export class MessengerService {
                     : this.configService.get('BACKUP_IMAGE_URL'),
             );
             await this.sendOneFont(senderPsid, userInformation, font);
-        } else {
+        } else if (status === FontStatus.INACTIVE) {
             await this.messengerBot.sendTextMessage(senderPsid, 'Font này hiện đang tạm khóa');
         }
     }

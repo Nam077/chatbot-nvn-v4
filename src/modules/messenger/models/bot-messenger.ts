@@ -231,7 +231,6 @@ export class BotMessenger {
         try {
             return await this.httpService.axiosRef.post('me/messenger_profile', requestBody);
         } catch (error) {
-            console.log(error);
             // throw error;
         }
     }
