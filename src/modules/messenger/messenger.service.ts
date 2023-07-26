@@ -175,7 +175,7 @@ export class MessengerService {
         if (await this.chatService.isAdmin(senderPsid)) {
             buttons.push({
                 type: 'postback',
-                title: 'Cập nhật trạng thái',
+                title: `Trạng thái: ${font.status === FontStatus.ACTIVE ? '🟢' : '🔴'}`,
                 payload: PAYLOADS.UPDATE_FONT_STATUS + font.id,
             });
         }
@@ -642,7 +642,7 @@ export class MessengerService {
         if (await this.chatService.isAdmin(senderPsid)) {
             buttons.push({
                 type: 'postback',
-                title: 'Cập nhật trạng thái',
+                title: `Trạng thái: ${font.status === FontStatus.ACTIVE ? '🟢' : '🔴'}`,
                 payload: PAYLOADS.UPDATE_FONT_STATUS + font.id,
             });
         }
@@ -661,7 +661,7 @@ export class MessengerService {
         if (await this.chatService.isAdmin(senderPsid)) {
             buttons.push({
                 type: 'postback',
-                title: 'Cập nhật trạng thái',
+                title: `Trạng thái: ${font.status === FontStatus.ACTIVE ? '🟢' : '🔴'}`,
                 payload: PAYLOADS.UPDATE_FONT_STATUS + font.id,
             });
         }
