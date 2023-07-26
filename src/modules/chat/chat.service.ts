@@ -671,7 +671,8 @@ export class ChatService {
         const results = await this.fontService.updateStatus(fontId);
         const { isSuccess, font } = results;
         if (isSuccess) {
-            return await this.updateKeyCache();
+            await this.updateFontChunkCache(10);
+            await this.updateKeyCache();
         }
         return results;
     }
