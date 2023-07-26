@@ -137,13 +137,18 @@ export class MessengerService {
         }
     }
     async sendSingleFont(senderPsid: string, userInformation: UserInformation, font: Font) {
-        await this.messengerBot.sendImageMessage(
-            senderPsid,
-            font.images.length > 0
-                ? font.images[getRanDomBetween(0, font.images.length - 1)].url
-                : this.configService.get('BACKUP_IMAGE_URL'),
-        );
-        await this.sendOneFont(senderPsid, userInformation, font);
+        const { status } = font;
+        if (status === FontStatus.ACTIVE || (await this.chatService.isAdmin(senderPsid))) {
+            await this.messengerBot.sendImageMessage(
+                senderPsid,
+                font.images.length > 0
+                    ? font.images[getRanDomBetween(0, font.images.length - 1)].url
+                    : this.configService.get('BACKUP_IMAGE_URL'),
+            );
+            await this.sendOneFont(senderPsid, userInformation, font);
+        } else {
+            await this.messengerBot.sendTextMessage(senderPsid, 'Font này hiện đang tạm khóa');
+        }
     }
     async sendOneFont(senderPsid: string, userInformation: UserInformation, font: Font) {
         const tempMessage =
