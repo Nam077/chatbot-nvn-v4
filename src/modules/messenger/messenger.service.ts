@@ -211,10 +211,7 @@ export class MessengerService {
     private async handleMessage(senderPsid: string, message) {
         const time: TimeCurrent = getTimeCurrent('Asia/Ho_Chi_Minh');
         const userInformation: UserInformation = await this.messengerBot.getUserProfile(senderPsid);
-        const dataFromMessage: DataFromMessage = await this.chatService.getDataFromMessage(
-            message,
-            await this.chatService.isAdmin(senderPsid),
-        );
+        const dataFromMessage: DataFromMessage = await this.chatService.getDataFromMessage(message);
         if (dataFromMessage.fonts.length > 0 || dataFromMessage.responses.length > 0) {
             if (dataFromMessage.fonts.length > 0) {
                 return await this.handleSendFonts(senderPsid, userInformation, dataFromMessage.fonts);

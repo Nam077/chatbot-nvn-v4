@@ -528,10 +528,7 @@ export class ChatService {
         }
     }
 
-    async getDataFromMessage(
-        message: string,
-        isAdmin?: boolean,
-    ): Promise<{
+    async getDataFromMessage(message: string): Promise<{
         fonts: Font[];
         responses: Response[];
     }> {
@@ -541,9 +538,7 @@ export class ChatService {
         keys.forEach((key: Key) => {
             if (message.toLowerCase().includes(key.value)) {
                 if (key.font) {
-                    if (key.font.status === FontStatus.ACTIVE || isAdmin === true) {
-                        fonts.push(key.font);
-                    }
+                    fonts.push(key.font);
                 }
                 if (key.response) {
                     responses.push(key.response);
@@ -551,12 +546,7 @@ export class ChatService {
             }
         });
         return {
-            fonts:
-                (await this.getMultipleDownloadStatus()) || isAdmin === true
-                    ? fonts
-                    : fonts.length > 0
-                    ? [fonts[0]]
-                    : [],
+            fonts: (await this.getMultipleDownloadStatus()) === true ? fonts : fonts.length > 0 ? [fonts[0]] : [],
             responses,
         };
     }
