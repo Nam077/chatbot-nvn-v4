@@ -266,7 +266,9 @@ export class MessengerService {
             await this.messengerBot.sendTextMessage(senderPsid, xsmb);
             return;
         } else if (message.includes('@font')) {
-            await this.handleFontGlobal(senderPsid, message);
+            await this.handleFontGlobal(senderPsid, userInformation, message);
+        } else if (message.includes('@random')) {
+            await this.handleRandom(senderPsid, userInformation, message);
         } else {
             const crawlerGoogles: CrawDataGoogle[] = await this.chatService.crawlerFromGoogleSearch(message);
             if (crawlerGoogles.length > 0) {
@@ -918,7 +920,7 @@ export class MessengerService {
         }
     }
 
-    private async handleFontGlobal(senderPsid: string, message: string) {
+    private async handleFontGlobal(senderPsid: string, userInformation: UserInformation, message: string) {
         const fontName = message.replaceAll('@font', '').trim();
         if (!fontName) {
             await this.messengerBot.sendTextMessage(senderPsid, `Bạn chưa nhập tên font`);
@@ -929,10 +931,11 @@ export class MessengerService {
             await this.messengerBot.sendTextMessage(senderPsid, `Không tìm thấy font ${fontName}`);
             return;
         }
-        await this.sendListFontGlobalGeneric(
-            senderPsid,
-            await this.messengerBot.getUserProfile(senderPsid),
-            fontGlobals,
-        );
+        await this.sendListFontGlobalGeneric(senderPsid, userInformation, fontGlobals);
+    }
+
+    private async handleRandom(senderPsid: string, userInformation: UserInformation, message: string) {
+        const fontGlobals: FontGlobal[] = await this.chatService.getRandomFontGlobal();
+        await this.sendListFontGlobalGeneric(senderPsid, userInformation, fontGlobals);
     }
 }
