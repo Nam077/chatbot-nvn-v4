@@ -14,7 +14,7 @@ import { slugifyString } from '../../utils/string';
 @Injectable()
 export class FontService {
     constructor(
-        @InjectRepository(Font)
+        @InjectRepository(Font, 'chat-bot')
         private readonly fontRepository: Repository<Font>,
         private readonly tagService: TagService,
         private readonly messageService: MessageService,

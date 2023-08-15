@@ -16,6 +16,7 @@ import { BanModule } from '../ban/ban.module';
 import { SettingModule } from '../setting/setting.module';
 import { AdminModule } from '../admin/admin.module';
 import { FoodModule } from '../food/food.module';
+import { FontGlobalModule } from '../font-global/font-global.module';
 
 @Module({
     imports: [
@@ -32,6 +33,7 @@ import { FoodModule } from '../food/food.module';
         SettingModule,
         AdminModule,
         FoodModule,
+        FontGlobalModule,
     ],
     controllers: [ChatController],
     providers: [ChatService, GoogleSheetService, CrawlerService],

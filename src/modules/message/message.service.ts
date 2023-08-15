@@ -8,7 +8,7 @@ import { Message } from './entities/message.entity';
 @Injectable()
 export class MessageService {
     constructor(
-        @InjectRepository(Message)
+        @InjectRepository(Message, 'chat-bot')
         private readonly messageRepository: Repository<Message>,
     ) {}
 

@@ -11,7 +11,7 @@ type SettingType = 'string' | 'number' | 'boolean';
 @Injectable()
 export class SettingService {
     constructor(
-        @InjectRepository(Setting)
+        @InjectRepository(Setting, 'chat-bot')
         private readonly settingRepository: Repository<Setting>,
     ) {}
 

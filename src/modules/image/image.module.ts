@@ -5,7 +5,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Image } from './entities/image.entity';
 
 @Module({
-    imports: [TypeOrmModule.forFeature([Image])],
+    imports: [TypeOrmModule.forFeature([Image], 'chat-bot')],
     controllers: [ImageController],
     providers: [ImageService],
     exports: [ImageService],

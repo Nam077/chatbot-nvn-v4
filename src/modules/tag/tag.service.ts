@@ -8,7 +8,7 @@ import { Tag } from './entities/tag.entity';
 @Injectable()
 export class TagService {
     constructor(
-        @InjectRepository(Tag)
+        @InjectRepository(Tag, 'chat-bot')
         private readonly tagRepository: Repository<Tag>,
     ) {}
 

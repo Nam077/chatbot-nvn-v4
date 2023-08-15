@@ -10,7 +10,10 @@ import { getRanDomBetween } from '../../utils/number';
 
 @Injectable()
 export class FoodService {
-    constructor(@InjectRepository(Food) private foodRepository: Repository<Food>) {}
+    constructor(
+        @InjectRepository(Food, 'chat-bot')
+        private foodRepository: Repository<Food>,
+    ) {}
 
     async create(createFoodDto: CreateFoodDto): Promise<Food> {
         return await this.foodRepository.save(createFoodDto);

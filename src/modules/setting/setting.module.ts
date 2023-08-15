@@ -5,7 +5,7 @@ import { Setting } from './entities/setting.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
 @Module({
-    imports: [TypeOrmModule.forFeature([Setting])],
+    imports: [TypeOrmModule.forFeature([Setting], 'chat-bot')],
     controllers: [SettingController],
     providers: [SettingService],
     exports: [SettingService],

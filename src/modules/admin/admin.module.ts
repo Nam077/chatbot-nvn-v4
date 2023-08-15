@@ -5,7 +5,7 @@ import { Admin } from './entities/admin.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
 @Module({
-    imports: [TypeOrmModule.forFeature([Admin])],
+    imports: [TypeOrmModule.forFeature([Admin], 'chat-bot')],
     controllers: [AdminController],
     providers: [AdminService],
     exports: [AdminService],

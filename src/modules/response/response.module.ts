@@ -10,7 +10,14 @@ import { LinkModule } from '../link/link.module';
 import { TagModule } from '../tag/tag.module';
 
 @Module({
-    imports: [TypeOrmModule.forFeature([Response]), KeyModule, ImageModule, MessageModule, LinkModule, TagModule],
+    imports: [
+        TypeOrmModule.forFeature([Response], 'chat-bot'),
+        KeyModule,
+        ImageModule,
+        MessageModule,
+        LinkModule,
+        TagModule,
+    ],
     controllers: [ResponseController],
     providers: [ResponseService],
     exports: [ResponseService],

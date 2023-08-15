@@ -10,6 +10,7 @@ import { Response } from '../response/entities/response.entity';
 import { getRanDomBetween } from '../../utils/number';
 import { chunkArray, validateMessage } from '../../utils/string';
 import { Food } from '../food/entities/food.entity';
+import { FontGlobal } from '../font-global/entities/font-global.entity';
 
 export const INTENT_START = ['bắt đầu', 'start', 'restart', 'restart bot', 'khởi động lại', 'khởi động lại'];
 export const COMMANDS_ADMIN = ['@ban', '@unban', '@multiple', '@bot', '@admin', '@token', '@update'];
@@ -30,6 +31,7 @@ enum PAYLOADS {
     GET_STARTED = 'GET_STARTED',
     LIST_FONT = 'LIST_FONT',
     UPDATE_FONT_STATUS = 'UPDATE_FONT_STATUS',
+    GET_FONT_GLOBAL = 'GET_FONT_GLOBAL',
 }
 
 @Injectable()
@@ -181,6 +183,17 @@ export class MessengerService {
         }
         await this.messengerBot.sendButtonMessage(senderPsid, message, buttons);
     }
+    async senOneFontGlobal(senderPsid: string, userInformation: UserInformation, fontGlobal: FontGlobal) {
+        await this.messengerBot.sendImageMessage(senderPsid, fontGlobal.thumbnail);
+        const message = `Chào ${userInformation.name}\nTôi đã nhận được yêu cầu của bạn\nTên font: ${fontGlobal.name} \nLink tải:\n\n${fontGlobal}`;
+        const buttons: Button[] = [];
+        buttons.push({
+            type: 'web_url',
+            url: fontGlobal.linkDrive,
+            title: 'Tải font',
+        });
+        await this.messengerBot.sendButtonMessage(senderPsid, message, buttons);
+    }
     getLinkDownload(font: Font): string {
         let linkDownload = '';
         for (let i = 0; i < font.links.length && i < 3; i++) {
@@ -252,6 +265,8 @@ export class MessengerService {
             const xsmb: string = await this.chatService.getXSMB();
             await this.messengerBot.sendTextMessage(senderPsid, xsmb);
             return;
+        } else if (message.includes('@font')) {
+            await this.handleFontGlobal(senderPsid, message);
         } else {
             const crawlerGoogles: CrawDataGoogle[] = await this.chatService.crawlerFromGoogleSearch(message);
             if (crawlerGoogles.length > 0) {
@@ -349,6 +364,12 @@ export class MessengerService {
     private async handlePostback(senderPsid: string, postback) {
         const userInformation: UserInformation = await this.messengerBot.getUserProfile(senderPsid);
         const payload = postback.payload;
+        if (payload.includes(PAYLOADS.GET_FONT_GLOBAL)) {
+            const fontGlobal = await this.chatService.getFontGlobalById(payload.replace(PAYLOADS.GET_FONT_GLOBAL, ''));
+            if (fontGlobal) {
+                await this.senOneFontGlobal(senderPsid, userInformation, fontGlobal);
+            }
+        }
         if (payload.includes(PAYLOADS.LIST_FONT)) {
             return await this.handleListFont(senderPsid, payload, userInformation);
         }
@@ -628,6 +649,34 @@ export class MessengerService {
         await this.messengerBot.sendGenericMessage(senderPsid, elements);
     }
 
+    private async sendListFontGlobalGeneric(
+        senderPsid: string,
+        userInformation: UserInformation,
+        fontGlobals: FontGlobal[],
+    ) {
+        const elements: Element[] = [];
+        for (const fontGlobal of fontGlobals) {
+            const element: Element = {
+                title: fontGlobal.name,
+                image_url: fontGlobal.thumbnail,
+                default_action: {
+                    type: 'web_url',
+                    url: this.configService.get('FAN_PAGE_URL'),
+                    webview_height_ratio: 'tall',
+                },
+                buttons: [
+                    {
+                        type: 'postback',
+                        title: 'Tải font',
+                        payload: PAYLOADS.GET_FONT_GLOBAL + fontGlobal.id,
+                    },
+                ],
+            };
+            elements.push(element);
+        }
+        await this.messengerBot.sendGenericMessage(senderPsid, elements);
+    }
+
     async getButtonPostbackFont(font: Font, senderPsid: string): Promise<Button[]> {
         const buttons: Button[] = [
             {
@@ -867,5 +916,23 @@ export class MessengerService {
         } else {
             await this.messengerBot.sendTextMessage(senderPsid, `Cập nhật thất bại`);
         }
+    }
+
+    private async handleFontGlobal(senderPsid: string, message: string) {
+        const fontName = message.replaceAll('@font', '').trim();
+        if (!fontName) {
+            await this.messengerBot.sendTextMessage(senderPsid, `Bạn chưa nhập tên font`);
+            return;
+        }
+        const fontGlobals: FontGlobal[] = await this.chatService.searchFontGlobal(fontName);
+        if (fontGlobals.length === 0) {
+            await this.messengerBot.sendTextMessage(senderPsid, `Không tìm thấy font ${fontName}`);
+            return;
+        }
+        await this.sendListFontGlobalGeneric(
+            senderPsid,
+            await this.messengerBot.getUserProfile(senderPsid),
+            fontGlobals,
+        );
     }
 }

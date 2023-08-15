@@ -11,7 +11,7 @@ import { RegisterDto } from '../auth/dto/register.dto';
 @Injectable()
 export class UserService {
     constructor(
-        @InjectRepository(User)
+        @InjectRepository(User, 'chat-bot')
         private readonly userRepository: Repository<User>,
     ) {}
 

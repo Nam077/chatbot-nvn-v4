@@ -5,7 +5,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Ban } from './entities/ban.entity';
 
 @Module({
-    imports: [TypeOrmModule.forFeature([Ban])],
+    imports: [TypeOrmModule.forFeature([Ban], 'chat-bot')],
     controllers: [BanController],
     providers: [BanService],
     exports: [BanService],

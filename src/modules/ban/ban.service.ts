@@ -9,7 +9,7 @@ import { ResponseLocal } from '../../interfaces/response-local';
 @Injectable()
 export class BanService {
     constructor(
-        @InjectRepository(Ban)
+        @InjectRepository(Ban, 'chat-bot')
         private readonly banRepository: Repository<Ban>,
     ) {}
 

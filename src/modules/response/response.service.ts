@@ -13,7 +13,7 @@ import { LinkService } from '../link/link.service';
 @Injectable()
 export class ResponseService {
     constructor(
-        @InjectRepository(Response)
+        @InjectRepository(Response, 'chat-bot')
         private readonly responseRepository: Repository<Response>,
         private readonly tagService: TagService,
         private readonly messageService: MessageService,

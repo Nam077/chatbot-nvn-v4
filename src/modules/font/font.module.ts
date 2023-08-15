@@ -10,7 +10,14 @@ import { TagModule } from '../tag/tag.module';
 import { ImageModule } from '../image/image.module';
 
 @Module({
-    imports: [TypeOrmModule.forFeature([Font]), KeyModule, ImageModule, MessageModule, LinkModule, TagModule],
+    imports: [
+        TypeOrmModule.forFeature([Font], 'chat-bot'),
+        KeyModule,
+        ImageModule,
+        MessageModule,
+        LinkModule,
+        TagModule,
+    ],
     controllers: [FontController],
     providers: [FontService],
     exports: [FontService],

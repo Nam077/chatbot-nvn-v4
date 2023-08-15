@@ -11,7 +11,7 @@ export type TypeCreate = 'font' | 'response';
 @Injectable()
 export class KeyService {
     constructor(
-        @InjectRepository(Key)
+        @InjectRepository(Key, 'chat-bot')
         private readonly keyRepository: Repository<Key>,
     ) {}
 

@@ -22,6 +22,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { AtGuard } from './modules/auth/guards/at-guard.service';
 import { APP_GUARD } from '@nestjs/core';
 import { FoodModule } from './modules/food/food.module';
+import { FontGlobalModule } from './modules/font-global/font-global.module';
 
 @Module({
     imports: [
@@ -47,6 +48,7 @@ import { FoodModule } from './modules/food/food.module';
         TagModule,
         FontChunkModule,
         FoodModule,
+        FontGlobalModule,
     ],
     controllers: [AppController],
     providers: [

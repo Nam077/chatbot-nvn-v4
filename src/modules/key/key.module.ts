@@ -5,7 +5,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Key } from './entities/key.entity';
 
 @Module({
-    imports: [TypeOrmModule.forFeature([Key])],
+    imports: [TypeOrmModule.forFeature([Key], 'chat-bot')],
     controllers: [KeyController],
     providers: [KeyService],
     exports: [KeyService],

@@ -5,7 +5,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Message } from './entities/message.entity';
 
 @Module({
-    imports: [TypeOrmModule.forFeature([Message])],
+    imports: [TypeOrmModule.forFeature([Message], 'chat-bot')],
     controllers: [MessageController],
     providers: [MessageService],
     exports: [MessageService],

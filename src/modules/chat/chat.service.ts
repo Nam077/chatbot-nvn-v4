@@ -27,6 +27,8 @@ import { Font, FontStatus } from '../font/entities/font.entity';
 import { getTimeCurrent, TimeCurrent } from '../../utils/time';
 import { FoodService } from '../food/food.service';
 import { Food } from '../food/entities/food.entity';
+import { FontGlobalService } from '../font-global/font-global.service';
+import { FontGlobal } from '../font-global/entities/font-global.entity';
 
 enum KeyEnum {
     FONT = 'FONT',
@@ -85,6 +87,7 @@ export class ChatService {
         private readonly settingService: SettingService,
         private readonly adminService: AdminService,
         private readonly foodService: FoodService,
+        private readonly fontGlobalService: FontGlobalService,
         @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
     ) {}
     async updateDataFromGoogleSheet() {
@@ -155,6 +158,13 @@ export class ChatService {
         const admins = (await this.adminService.findAll()).map((admin) => admin.senderPsid);
         await this.cacheManager.set(KeyEnum.ADMIN_LIST, admins, CACHE_TTL_MILLISECOND);
         return admins;
+    }
+
+    async searchFontGlobal(keyword: string): Promise<FontGlobal[]> {
+        return await this.fontGlobalService.search(keyword);
+    }
+    async getRandomFontGlobal(): Promise<FontGlobal[]> {
+        return await this.fontGlobalService.getRandomFonts();
     }
 
     async crawlerFromGoogleSearch(key: string): Promise<CrawDataGoogle[]> {
@@ -665,5 +675,9 @@ export class ChatService {
             await this.updateKeyCache();
         }
         return results;
+    }
+
+    async getFontGlobalById(id: string) {
+        return await this.fontGlobalService.findOne(+id);
     }
 }

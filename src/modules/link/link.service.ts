@@ -8,7 +8,7 @@ import { In, Repository } from 'typeorm';
 @Injectable()
 export class LinkService {
     constructor(
-        @InjectRepository(Link)
+        @InjectRepository(Link, 'chat-bot')
         private readonly linkRepository: Repository<Link>,
     ) {}
 

@@ -8,7 +8,7 @@ import { Image } from './entities/image.entity';
 @Injectable()
 export class ImageService {
     constructor(
-        @InjectRepository(Image)
+        @InjectRepository(Image, 'chat-bot')
         private readonly imageRepository: Repository<Image>,
     ) {}
 
