@@ -185,7 +185,7 @@ export class MessengerService {
     }
     async senOneFontGlobal(senderPsid: string, userInformation: UserInformation, fontGlobal: FontGlobal) {
         await this.messengerBot.sendImageMessage(senderPsid, fontGlobal.thumbnail);
-        const message = `Chào ${userInformation.name}\nTôi đã nhận được yêu cầu của bạn\nTên font: ${fontGlobal.name} \nLink tải:\n\n${fontGlobal}`;
+        const message = `Chào ${userInformation.name}\nTôi đã nhận được yêu cầu của bạn\nTên font: ${fontGlobal.name}\nThể loại: ${fontGlobal.categoryName}\nLink tải:\n\n${fontGlobal.linkDrive}`;
         const buttons: Button[] = [];
         buttons.push({
             type: 'web_url',
@@ -666,6 +666,7 @@ export class MessengerService {
                     url: this.configService.get('FAN_PAGE_URL'),
                     webview_height_ratio: 'tall',
                 },
+                subtitle: fontGlobal.categoryName,
                 buttons: [
                     {
                         type: 'postback',
