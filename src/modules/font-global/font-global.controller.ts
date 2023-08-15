@@ -11,6 +11,7 @@ export class FontGlobalController {
     constructor(private readonly fontGlobalService: FontGlobalService) {}
 
     @Post()
+    @IsPublic()
     create(@Body() createFontGlobalDto: CreateFontGlobalDto) {
         return this.fontGlobalService.create(createFontGlobalDto);
     }
