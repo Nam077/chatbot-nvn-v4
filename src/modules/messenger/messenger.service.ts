@@ -224,8 +224,25 @@ export class MessengerService {
     private async handleMessage(senderPsid: string, message) {
         const time: TimeCurrent = getTimeCurrent('Asia/Ho_Chi_Minh');
         const userInformation: UserInformation = await this.messengerBot.getUserProfile(senderPsid);
-        if (message.includes('@random')) {
-            await this.handleRandom(senderPsid, userInformation, message);
+        if (message.toLowerCase().includes('@yt')) {
+            const data = await this.chatService.getYouTubeSearch(message);
+            if (data) {
+                await this.sendYoutubeMessage(senderPsid, data);
+            }
+            return;
+        } else if (message.toLowerCase().includes('@lucky')) {
+            const data = await this.chatService.getLuckyNumber(message);
+            if (data) {
+                await this.messengerBot.sendTextMessage(senderPsid, data.title);
+            }
+            return;
+        } else if (message.includes('@xsmb')) {
+            const xsmb: string = await this.chatService.getXSMB();
+            await this.messengerBot.sendTextMessage(senderPsid, xsmb);
+            return;
+        } else if (message.includes('@font')) {
+            await this.handleFontGlobal(senderPsid, userInformation, message);
+            return;
         }
         const dataFromMessage: DataFromMessage = await this.chatService.getDataFromMessage(message);
         if (dataFromMessage.fonts.length > 0 || dataFromMessage.responses.length > 0) {
@@ -253,40 +270,21 @@ export class MessengerService {
                 return this.handleFoodRecommend(senderPsid, userInformation);
             }
         });
+        const crawlerGoogles: CrawDataGoogle[] = await this.chatService.crawlerFromGoogleSearch(message);
+        if (crawlerGoogles.length > 0) {
+            const crawlerGoogle = crawlerGoogles[0];
+            if (typeof crawlerGoogle.data === 'string') {
+                await this.messengerBot.sendTextMessage(senderPsid, crawlerGoogle.data);
+                return;
+            }
+            if (crawlerGoogle.data instanceof Array) {
+                await this.messengerBot.sendMultipleTextMessage(senderPsid, crawlerGoogle.data);
+                return;
+            }
 
-        if (message.toLowerCase().includes('@yt')) {
-            const data = await this.chatService.getYouTubeSearch(message);
-            if (data) {
-                await this.sendYoutubeMessage(senderPsid, data);
-            }
-        } else if (message.toLowerCase().includes('@lucky')) {
-            const data = await this.chatService.getLuckyNumber(message);
-            if (data) {
-                await this.messengerBot.sendTextMessage(senderPsid, data.title);
-            }
-        } else if (message.includes('@xsmb')) {
-            const xsmb: string = await this.chatService.getXSMB();
-            await this.messengerBot.sendTextMessage(senderPsid, xsmb);
             return;
-        } else if (message.includes('@font')) {
-            await this.handleFontGlobal(senderPsid, userInformation, message);
         } else {
-            const crawlerGoogles: CrawDataGoogle[] = await this.chatService.crawlerFromGoogleSearch(message);
-            if (crawlerGoogles.length > 0) {
-                const crawlerGoogle = crawlerGoogles[0];
-                if (typeof crawlerGoogle.data === 'string') {
-                    await this.messengerBot.sendTextMessage(senderPsid, crawlerGoogle.data);
-                    return;
-                }
-                if (crawlerGoogle.data instanceof Array) {
-                    await this.messengerBot.sendMultipleTextMessage(senderPsid, crawlerGoogle.data);
-                    return;
-                }
-
-                return;
-            } else {
-                return;
-            }
+            return;
         }
     }
 
