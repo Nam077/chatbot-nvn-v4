@@ -192,6 +192,11 @@ export class MessengerService {
             url: fontGlobal.linkDrive,
             title: 'Tải font',
         });
+        buttons.push({
+            type: 'web_url',
+            url: fontGlobal.moreLink,
+            title: 'Mua font',
+        });
         await this.messengerBot.sendButtonMessage(senderPsid, message, buttons);
     }
     getLinkDownload(font: Font): string {
@@ -673,6 +678,11 @@ export class MessengerService {
                         type: 'postback',
                         title: 'Tải font',
                         payload: PAYLOADS.GET_FONT_GLOBAL + fontGlobal.id,
+                    },
+                    {
+                        type: 'web_url',
+                        title: 'Mua font',
+                        url: fontGlobal.moreLink,
                     },
                 ],
             };
