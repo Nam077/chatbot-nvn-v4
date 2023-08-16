@@ -63,12 +63,12 @@ export class FontGlobalService {
             .getMany();
     }
 
-    async getRandomFonts(limit = 10, keyword = ''): Promise<FontGlobal[]> {
+    async getRandomFonts(limit = 10, keyword = '') {
         return await this.fontGlobalRepository
             .createQueryBuilder('fonts')
             .where('fonts.name LIKE :keyword', { keyword: `%${keyword}%` })
             .orWhere('fonts.categoryName LIKE :keyword', { keyword: `%${keyword}%` })
-            .orderBy('RAND()')
+            .orderBy('RANDOM()')
             .limit(limit)
             .getMany();
     }

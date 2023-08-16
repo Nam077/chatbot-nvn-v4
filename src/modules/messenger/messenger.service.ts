@@ -660,7 +660,7 @@ export class MessengerService {
         for (const fontGlobal of fontGlobals) {
             const element: Element = {
                 title: fontGlobal.name,
-                image_url: fontGlobal.thumbnail,
+                image_url: fontGlobal.thumbnail || this.configService.get('BACKUP_IMAGE_URL'),
                 default_action: {
                     type: 'web_url',
                     url: this.configService.get('FAN_PAGE_URL'),
@@ -936,7 +936,8 @@ export class MessengerService {
     }
 
     private async handleRandom(senderPsid: string, userInformation: UserInformation, message: string) {
-        const fontGlobals: FontGlobal[] = await this.chatService.getRandomFontGlobal();
+        const keyword = message.replaceAll('@random', '').trim();
+        const fontGlobals: FontGlobal[] = await this.chatService.getRandomFontGlobal(keyword);
         await this.sendListFontGlobalGeneric(senderPsid, userInformation, fontGlobals);
     }
 }

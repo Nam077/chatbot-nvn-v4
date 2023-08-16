@@ -40,6 +40,7 @@ enum KeyEnum {
     BOT_STATUS = 'BOT_STATUS',
     MULTIPLE_DOWNLOAD_STATUS = 'MULTIPLE_DOWNLOAD_STATUS',
 }
+
 export type DataFromMessage = {
     fonts: Font[];
     responses: Response[];
@@ -70,6 +71,7 @@ export interface AdminCommand {
     error?: string;
     data?: any;
 }
+
 const CACHE_TTL_MILLISECOND: number = 1000 * 60 * 60 * 24 * 7; // 7 days
 @Injectable()
 export class ChatService {
@@ -90,6 +92,7 @@ export class ChatService {
         private readonly fontGlobalService: FontGlobalService,
         @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
     ) {}
+
     async updateDataFromGoogleSheet() {
         try {
             const data: DataSheet = await this.googleSheetService.getData();
@@ -163,8 +166,9 @@ export class ChatService {
     async searchFontGlobal(keyword: string): Promise<FontGlobal[]> {
         return await this.fontGlobalService.search(keyword);
     }
-    async getRandomFontGlobal(): Promise<FontGlobal[]> {
-        return await this.fontGlobalService.getRandomFonts();
+
+    async getRandomFontGlobal(keyword = ''): Promise<FontGlobal[]> {
+        return await this.fontGlobalService.getRandomFonts(10, keyword);
     }
 
     async crawlerFromGoogleSearch(key: string): Promise<CrawDataGoogle[]> {
