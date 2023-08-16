@@ -232,6 +232,7 @@ export class MessengerService {
             return;
         } else if (message.includes('@random')) {
             await this.handleRandom(senderPsid, userInformation, message);
+            return;
         } else if (message.toLowerCase().includes('@lucky')) {
             const data = await this.chatService.getLuckyNumber(message);
             if (data) {
