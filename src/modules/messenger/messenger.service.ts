@@ -230,6 +230,8 @@ export class MessengerService {
                 await this.sendYoutubeMessage(senderPsid, data);
             }
             return;
+        } else if (message.includes('@random')) {
+            await this.handleRandom(senderPsid, userInformation, message);
         } else if (message.toLowerCase().includes('@lucky')) {
             const data = await this.chatService.getLuckyNumber(message);
             if (data) {
@@ -281,7 +283,6 @@ export class MessengerService {
                 await this.messengerBot.sendMultipleTextMessage(senderPsid, crawlerGoogle.data);
                 return;
             }
-
             return;
         } else {
             return;
