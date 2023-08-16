@@ -30,8 +30,8 @@ export class FontGlobalController {
 
     @Get('random')
     @IsPublic()
-    getRandomFonts(@Query('limit') limit: number) {
-        return this.fontGlobalService.getRandomFonts(limit);
+    getRandomFonts(@Query('limit') limit: number, @Query('keyword') keyword: string) {
+        return this.fontGlobalService.getRandomFonts(limit, keyword);
     }
     @Get('search/:keyword')
     @IsPublic()
