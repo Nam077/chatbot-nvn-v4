@@ -224,6 +224,9 @@ export class MessengerService {
     private async handleMessage(senderPsid: string, message) {
         const time: TimeCurrent = getTimeCurrent('Asia/Ho_Chi_Minh');
         const userInformation: UserInformation = await this.messengerBot.getUserProfile(senderPsid);
+        if (message.includes('@random')) {
+            await this.handleRandom(senderPsid, userInformation, message);
+        }
         const dataFromMessage: DataFromMessage = await this.chatService.getDataFromMessage(message);
         if (dataFromMessage.fonts.length > 0 || dataFromMessage.responses.length > 0) {
             if (dataFromMessage.fonts.length > 0) {
@@ -267,8 +270,6 @@ export class MessengerService {
             return;
         } else if (message.includes('@font')) {
             await this.handleFontGlobal(senderPsid, userInformation, message);
-        } else if (message.includes('@random')) {
-            await this.handleRandom(senderPsid, userInformation, message);
         } else {
             const crawlerGoogles: CrawDataGoogle[] = await this.chatService.crawlerFromGoogleSearch(message);
             if (crawlerGoogles.length > 0) {
