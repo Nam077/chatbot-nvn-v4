@@ -250,18 +250,20 @@ export class MessengerService {
             return;
         } else if (message.includes('@random') || message.includes('@font')) {
             const futureGlobal = await this.chatService.checkIsFutureGlobalExist(senderPsid);
-            if (!futureGlobal && !this.chatService.isAdmin(senderPsid)) {
-                await this.messengerBot.sendTextMessage(
-                    senderPsid,
-                    `Bạn chưa được sử dụng tính năng này vui lòng gửi ảnh đã Like và Follow page \n ${this.configService.get<string>(
-                        'FAN_PAGE_URL',
-                    )} \n sau đó gửi tin nhắn @rgf để sử dụng tính năng này`,
-                );
-                return;
-            }
-            if (!futureGlobal.status && !this.chatService.isAdmin(senderPsid)) {
-                const messageSend = `Hiện tại tính năng của bạn đang bị tắt vui lòng liên hệ admin để được hỗ trợ`;
-                return await this.messengerBot.sendTextMessage(senderPsid, messageSend);
+            if (!await this.chatService.isAdmin(senderPsid)) {
+                if (!futureGlobal ) {
+                    await this.messengerBot.sendTextMessage(
+                        senderPsid,
+                        `Bạn chưa được sử dụng tính năng này vui lòng gửi ảnh đã Like và Follow page \n ${this.configService.get<string>(
+                            'FAN_PAGE_URL',
+                        )} \n sau đó gửi tin nhắn @rgf để sử dụng tính năng này`,
+                    );
+                    return;
+                }
+                if (!futureGlobal.status ) {
+                    const messageSend = `Hiện tại tính năng của bạn đang bị tắt vui lòng liên hệ admin để được hỗ trợ`;
+                    return await this.messengerBot.sendTextMessage(senderPsid, messageSend);
+                }
             }
             if (message.includes('@random')) {
                 await this.handleRandom(senderPsid, userInformation, message);
