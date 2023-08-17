@@ -1056,19 +1056,20 @@ export class MessengerService {
             return;
         }
         const futureGlobalResponseLocal = await this.chatService.getFeatureGlobal(senderPsidAdd);
-        await this.sendFutureGlobalButton(senderPsid, userInformation, futureGlobalResponseLocal);
+        await this.sendFutureGlobalButton(senderPsid, userInformation, futureGlobalResponseLocal, senderPsidAdd);
     }
 
     private async sendFutureGlobalButton(
         senderPsid: string,
         userInformation: UserInformation,
         futureGlobalResponseLocal: ResponseLocal<FutureGlobal>,
+        senderPsidAdd: string,
     ) {
         const buttons: Button[] = [];
         if (futureGlobalResponseLocal.data) {
             buttons.push({
                 type: 'postback',
-                payload: `${PAYLOADS.CHANGE_STATUS_FUTURE_GLOBAL}${senderPsid}`,
+                payload: `${PAYLOADS.CHANGE_STATUS_FUTURE_GLOBAL}${senderPsidAdd}`,
                 title: `Trạng thái: ${futureGlobalResponseLocal.data.status === true ? '🟢' : '🔴'}`,
             });
         } else {
