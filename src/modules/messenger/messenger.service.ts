@@ -1083,6 +1083,7 @@ export class MessengerService {
 
     private async handleChangeStatusFutureGlobal(senderPsid: string, payload: any, userInformation: UserInformation) {
         const senderPsidChange = payload.replaceAll(PAYLOADS.CHANGE_STATUS_FUTURE_GLOBAL, '');
+        console.log(senderPsidChange);
         if (!senderPsid) {
             await this.messengerBot.sendTextMessage(senderPsid, `Bạn chưa nhập id`);
             return;
