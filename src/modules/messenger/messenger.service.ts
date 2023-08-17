@@ -1100,9 +1100,7 @@ export class MessengerService {
             await this.messengerBot.sendTextMessage(
                 // gửi thông báo cho người dùng
                 senderPsidChange,
-                `Tài khoản ${userInformation.name} có id ${senderPsid} đã thay đổi trạng thái của bạn thành ${
-                    futureGlobalResponseLocal.data.status === true ? '🟢' : '🔴'
-                }`,
+                `Đã thay đổi trạng thái sang ${futureGlobalResponseLocal.data.status === true ? '🟢' : '🔴'}`,
             );
         } else {
             await this.messengerBot.sendTextMessage(
