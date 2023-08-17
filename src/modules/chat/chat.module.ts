@@ -17,6 +17,7 @@ import { SettingModule } from '../setting/setting.module';
 import { AdminModule } from '../admin/admin.module';
 import { FoodModule } from '../food/food.module';
 import { FontGlobalModule } from '../font-global/font-global.module';
+import { FutureGlobalModule } from '../future-global/future-global.module';
 
 @Module({
     imports: [
@@ -34,6 +35,7 @@ import { FontGlobalModule } from '../font-global/font-global.module';
         AdminModule,
         FoodModule,
         FontGlobalModule,
+        FutureGlobalModule,
     ],
     controllers: [ChatController],
     providers: [ChatService, GoogleSheetService, CrawlerService],

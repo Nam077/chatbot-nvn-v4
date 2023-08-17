@@ -11,11 +11,14 @@ import { getRanDomBetween } from '../../utils/number';
 import { chunkArray, validateMessage } from '../../utils/string';
 import { Food } from '../food/entities/food.entity';
 import { FontGlobal } from '../font-global/entities/font-global.entity';
+import { ResponseLocal } from '../../interfaces/response-local';
+import { FutureGlobal } from '../future-global/entities/future-global.entity';
 
 export const INTENT_START = ['bắt đầu', 'start', 'restart', 'restart bot', 'khởi động lại', 'khởi động lại'];
 export const COMMANDS_ADMIN = ['@ban', '@unban', '@multiple', '@bot', '@admin', '@token', '@update'];
 const FOOD_COMMANDS = ['ăn gì', 'an gi', 'món gì', 'món khác', 'nấu gì'];
 export type TYPE_BUTTON_FONTS = 'postback' | 'web_url';
+
 enum PAYLOADS {
     RESTART_BOT = 'RESTART_BOT',
     TOGGLE_BOT = 'TOGGLE_BOT',
@@ -32,6 +35,9 @@ enum PAYLOADS {
     LIST_FONT = 'LIST_FONT',
     UPDATE_FONT_STATUS = 'UPDATE_FONT_STATUS',
     GET_FONT_GLOBAL = 'GET_FONT_GLOBAL',
+    REGISTER_FUTURE_GLOBAL = 'REGISTER_FUTURE_GLOBAL',
+    REJECT_FUTURE_GLOBAL = 'REJECT_FUTURE_GLOBAL',
+    CHANGE_STATUS_FUTURE_GLOBAL = 'CHANGE_STATUS_FUTURE_GLOBAL',
 }
 
 @Injectable()
@@ -115,6 +121,7 @@ export class MessengerService {
         }
         return false;
     }
+
     async handleSendFonts(senderPsid: string, userInformation: UserInformation, fonts: Font[]) {
         if (fonts.length === 1) {
             return await this.sendSingleFont(senderPsid, userInformation, fonts[0]);
@@ -138,6 +145,7 @@ export class MessengerService {
             await this.messengerBot.sendTextMessage(senderPsid, message);
         }
     }
+
     async sendSingleFont(senderPsid: string, userInformation: UserInformation, font: Font) {
         const { status } = font;
         if (status === FontStatus.ACTIVE || (await this.chatService.isAdmin(senderPsid))) {
@@ -152,6 +160,7 @@ export class MessengerService {
             await this.messengerBot.sendTextMessage(senderPsid, 'Font này hiện đang tạm khóa');
         }
     }
+
     async sendOneFont(senderPsid: string, userInformation: UserInformation, font: Font) {
         const tempMessage =
             font.messages.length > 0
@@ -183,6 +192,7 @@ export class MessengerService {
         }
         await this.messengerBot.sendButtonMessage(senderPsid, message, buttons);
     }
+
     async senOneFontGlobal(senderPsid: string, userInformation: UserInformation, fontGlobal: FontGlobal) {
         await this.messengerBot.sendImageMessage(senderPsid, fontGlobal.thumbnail);
         const message = `Chào ${userInformation.name}\nTôi đã nhận được yêu cầu của bạn\nTên font: ${fontGlobal.name}\nThể loại: ${fontGlobal.categoryName}\nLink tải:\n\n${fontGlobal.linkDrive}`;
@@ -199,6 +209,7 @@ export class MessengerService {
         });
         await this.messengerBot.sendButtonMessage(senderPsid, message, buttons);
     }
+
     getLinkDownload(font: Font): string {
         let linkDownload = '';
         for (let i = 0; i < font.links.length && i < 3; i++) {
@@ -206,9 +217,11 @@ export class MessengerService {
         }
         return linkDownload;
     }
+
     async sendMultipleFonts(senderPsid: string, userInformation: UserInformation, fonts: Font[]) {
         await this.sendListFontGeneric(senderPsid, userInformation, fonts, 'web_url');
     }
+
     private async handleSendResponses(senderPsid: string, userInformation: UserInformation, responses: Response[]) {
         const response = responses[getRanDomBetween(0, responses.length - 1)];
         if (response.messages.length > 0) {
@@ -235,11 +248,25 @@ export class MessengerService {
                 await this.sendYoutubeMessage(senderPsid, data);
             }
             return;
-        } else if (message.includes('@random')) {
-            await this.handleRandom(senderPsid, userInformation, message);
-            return;
+        } else if (message.includes('@random') || message.includes('@font')) {
+            if (!(await this.chatService.checkIsFutureGlobalExist(senderPsid))) {
+                await this.messengerBot.sendTextMessage(
+                    senderPsid,
+                    `Bạn chưa được sử dụng tính năng này vui lòng gửi ảnh đã Like và Follow page \n ${this.configService.get<string>(
+                        'FAN_PAGE_URL',
+                    )} \n sau đó gửi tin nhắn @rgf để sử dụng tính năng này`,
+                );
+                return;
+            }
+            if (message.includes('@random')) {
+                await this.handleRandom(senderPsid, userInformation, message);
+                return;
+            } else if (message.includes('@font')) {
+                await this.handleFontGlobal(senderPsid, userInformation, message);
+                return;
+            }
         } else if (message.toLowerCase().includes('@lucky')) {
-            const data = await this.chatService.getLuckyNumber(message);
+            const data = this.chatService.getLuckyNumber(message);
             if (data) {
                 await this.messengerBot.sendTextMessage(senderPsid, data.title);
             }
@@ -248,9 +275,8 @@ export class MessengerService {
             const xsmb: string = await this.chatService.getXSMB();
             await this.messengerBot.sendTextMessage(senderPsid, xsmb);
             return;
-        } else if (message.includes('@font')) {
-            await this.handleFontGlobal(senderPsid, userInformation, message);
-            return;
+        } else if (message.includes('@rgf')) {
+            await this.handleFutureGlobal(senderPsid, userInformation);
         }
         const dataFromMessage: DataFromMessage = await this.chatService.getDataFromMessage(message);
         if (dataFromMessage.fonts.length > 0 || dataFromMessage.responses.length > 0) {
@@ -272,6 +298,9 @@ export class MessengerService {
                     return this.handleAdminCommand(senderPsid, message);
                 }
             });
+            if (message.toLowerCase().includes('@gf')) {
+                await this.handleFunctionForFontGlobal(senderPsid, userInformation, message);
+            }
         }
         FOOD_COMMANDS.forEach((command) => {
             if (message.toLowerCase().includes(command)) {
@@ -319,7 +348,6 @@ export class MessengerService {
 
     private async handleAdminCommand(senderPsid: string, message: string) {
         const result = await this.chatService.adminFunctions(message);
-        console.log(result);
         if (result.command === 'BAN') {
             if (result.isSuccessful) {
                 const senderInformation: UserInformation = await this.messengerBot.getUserProfile(
@@ -377,6 +405,16 @@ export class MessengerService {
             if (fontGlobal) {
                 await this.senOneFontGlobal(senderPsid, userInformation, fontGlobal);
             }
+            return;
+        }
+        if (payload.includes(PAYLOADS.REGISTER_FUTURE_GLOBAL)) {
+            return await this.handleRegisterFutureGlobal(senderPsid, payload, userInformation);
+        }
+        if (payload.includes(PAYLOADS.CHANGE_STATUS_FUTURE_GLOBAL)) {
+            return await this.handleChangeStatusFutureGlobal(senderPsid, payload, userInformation);
+        }
+        if (payload.includes(PAYLOADS.REJECT_FUTURE_GLOBAL)) {
+            return await this.handleRejectFutureGlobal(senderPsid, payload, userInformation);
         }
         if (payload.includes(PAYLOADS.LIST_FONT)) {
             return await this.handleListFont(senderPsid, payload, userInformation);
@@ -455,6 +493,7 @@ export class MessengerService {
         await this.messengerBot.sendTextMessage(senderPsid, 'Bật bot thành công');
         this.removeListBotOff(senderPsid);
     }
+
     private async toggleBotOff(senderPsid: string, userInformation: UserInformation) {
         await this.messengerBot.sendTextMessage(senderPsid, 'Tắt bot thành công');
         this.addListBotOff(senderPsid);
@@ -867,6 +906,7 @@ export class MessengerService {
             `-------------------------\n`;
         return await this.messengerBot.sendTextMessage(senderPsid, string);
     }
+
     async setUpPersistentMenu() {
         const persistentMenu: PersistentMenu = this.getPersistentMenu();
         await this.messengerBot.setPersistentMenu([persistentMenu]);
@@ -950,5 +990,104 @@ export class MessengerService {
         const keyword = message.replaceAll('@random', '').trim();
         const fontGlobals: FontGlobal[] = await this.chatService.getRandomFontGlobal(keyword);
         await this.sendListFontGlobalGeneric(senderPsid, userInformation, fontGlobals);
+    }
+
+    private async handleFutureGlobal(senderPsid: string, userInformation: UserInformation) {
+        const buttons: Button[] = [
+            {
+                type: 'postback',
+                payload: `${PAYLOADS.REGISTER_FUTURE_GLOBAL}${senderPsid}`,
+                title: 'Chấp nhận',
+            },
+            {
+                type: 'postback',
+                payload: `${PAYLOADS.REJECT_FUTURE_GLOBAL}${senderPsid}`,
+                title: 'Từ chối',
+            },
+        ];
+        // gửi yêu cầu đến admin để xác nhận
+        const message = `Tài khoản ${userInformation.name} có id ${senderPsid} muốn đăng ký sử dụng tính năng Random và tìm kiếm font chữ quốc tế`;
+        await this.messengerBot.sendButtonMessage('3171579152927680', message, buttons);
+        await this.messengerBot.sendTextMessage(senderPsid, `Đã gửi yêu cầu đến admin, vui lòng chờ phản hồi`);
+    }
+
+    private async handleRegisterFutureGlobal(senderPsid: string, payload: any, userInformation: UserInformation) {
+        const senderPsidAdd = payload.replaceAll(PAYLOADS.REGISTER_FUTURE_GLOBAL, '');
+        if (!senderPsidAdd) {
+            await this.messengerBot.sendTextMessage(senderPsid, `Bạn chưa nhập id`);
+            return;
+        }
+        const { isSuccess, data, message } = await this.chatService.createFutureGlobalByAdmin(senderPsidAdd);
+        if (isSuccess) {
+            await this.messengerBot.sendTextMessage(senderPsid, `Đăng ký thành công cho tài khoản ${data.senderPsid}`);
+            await this.messengerBot.sendTextMessage(
+                data.senderPsid,
+                `Bạn đã được admin đăng ký sử dụng tính năng Random và tìm kiếm font chữ quốc tế`,
+            );
+        } else {
+            await this.messengerBot.sendTextMessage(senderPsid, message);
+        }
+    }
+
+    private async handleRejectFutureGlobal(senderPsid: string, payload: any, userInformation: UserInformation) {
+        const senderPsidAdd: string = payload.replaceAll(PAYLOADS.REJECT_FUTURE_GLOBAL, '');
+        if (!senderPsidAdd) {
+            await this.messengerBot.sendTextMessage(senderPsid, `Bạn chưa nhập id`);
+            return;
+        }
+        await this.messengerBot.sendTextMessage(senderPsid, `Đã từ chối yêu cầu của tài khoản ${senderPsidAdd}`);
+        await this.messengerBot.sendTextMessage(
+            senderPsidAdd,
+            `Yêu cầu của bạn đã bị từ chối, vui lòng thực hiện đủ các bước để đăng ký`,
+        );
+    }
+
+    private async handleFunctionForFontGlobal(senderPsid: string, userInformation: UserInformation, message) {
+        const senderPsidAdd: string = message.replaceAll('@gf', '').trim();
+        if (!senderPsidAdd) {
+            await this.messengerBot.sendTextMessage(senderPsid, `Bạn chưa nhập id`);
+            return;
+        }
+        const futureGlobalResponseLocal = await this.chatService.getFeatureGlobal(senderPsidAdd);
+        await this.sendFutureGlobalButton(senderPsid, userInformation, futureGlobalResponseLocal);
+    }
+
+    private async sendFutureGlobalButton(
+        senderPsid: string,
+        userInformation: UserInformation,
+        futureGlobalResponseLocal: ResponseLocal<FutureGlobal>,
+    ) {
+        const buttons: Button[] = [];
+        if (futureGlobalResponseLocal.data) {
+            buttons.push({
+                type: 'postback',
+                payload: `${PAYLOADS.CHANGE_STATUS_FUTURE_GLOBAL}${senderPsid}`,
+                title: `Trạng thái: ${futureGlobalResponseLocal.data.status === true ? '🟢' : '🔴'}`,
+            });
+        } else {
+            buttons.push({
+                type: 'postback',
+                payload: `${PAYLOADS.REGISTER_FUTURE_GLOBAL}${senderPsid}`,
+                title: 'Thêm quyền',
+            });
+        }
+        await this.messengerBot.sendButtonMessage(senderPsid, 'Bạn muốn làm gì?', buttons);
+    }
+
+    private async handleChangeStatusFutureGlobal(senderPsid: string, payload: any, userInformation: UserInformation) {
+        senderPsid = payload.replaceAll(PAYLOADS.CHANGE_STATUS_FUTURE_GLOBAL, '');
+        if (!senderPsid) {
+            await this.messengerBot.sendTextMessage(senderPsid, `Bạn chưa nhập id`);
+            return;
+        }
+        const futureGlobalResponseLocal: ResponseLocal<FutureGlobal> = await this.chatService.changeFutureGlobalStatus(
+            senderPsid,
+        );
+        if (futureGlobalResponseLocal.isSuccess) {
+            await this.messengerBot.sendTextMessage(
+                senderPsid,
+                `Thay đổi trạng thái sang ${futureGlobalResponseLocal.data.status === true ? '🟢' : '🔴'} thành công`,
+            );
+        }
     }
 }

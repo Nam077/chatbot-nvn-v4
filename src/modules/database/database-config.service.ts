@@ -14,6 +14,7 @@ import { Image } from '../image/entities/image.entity';
 import { Tag } from '../tag/entities/tag.entity';
 import { FontChunk } from '../font-chunk/entities/font-chunk.entity';
 import { Food } from '../food/entities/food.entity';
+import { FutureGlobal } from '../future-global/entities/future-global.entity';
 
 @Injectable()
 export class DatabaseConfigService implements TypeOrmOptionsFactory {
@@ -23,7 +24,22 @@ export class DatabaseConfigService implements TypeOrmOptionsFactory {
         return {
             type: 'better-sqlite3',
             database: this.configService.get<string>('DB_NAME'),
-            entities: [User, Setting, Admin, Ban, Font, Key, Response, Link, Message, Image, Tag, FontChunk, Food],
+            entities: [
+                User,
+                Setting,
+                Admin,
+                Ban,
+                Font,
+                Key,
+                Response,
+                Link,
+                Message,
+                Image,
+                Tag,
+                FontChunk,
+                Food,
+                FutureGlobal,
+            ],
             synchronize: true,
             autoLoadEntities: true,
             // logging: true,

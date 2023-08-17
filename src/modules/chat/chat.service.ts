@@ -29,6 +29,9 @@ import { FoodService } from '../food/food.service';
 import { Food } from '../food/entities/food.entity';
 import { FontGlobalService } from '../font-global/font-global.service';
 import { FontGlobal } from '../font-global/entities/font-global.entity';
+import { FutureGlobalService } from '../future-global/future-global.service';
+import { FutureGlobal } from '../future-global/entities/future-global.entity';
+import { CreateFutureGlobalDto } from '../future-global/dto/create-future-global.dto';
 
 enum KeyEnum {
     FONT = 'FONT',
@@ -90,6 +93,7 @@ export class ChatService {
         private readonly adminService: AdminService,
         private readonly foodService: FoodService,
         private readonly fontGlobalService: FontGlobalService,
+        private readonly featureGlobalService: FutureGlobalService,
         @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
     ) {}
 
@@ -683,5 +687,22 @@ export class ChatService {
 
     async getFontGlobalById(id: string) {
         return await this.fontGlobalService.findOne(+id);
+    }
+
+    async checkIsFutureGlobalExist(senderPsid: string): Promise<boolean> {
+        return await this.featureGlobalService.checkIsFutureGlobalExist(senderPsid);
+    }
+    async removeFutureGlobal(senderPsid: string): Promise<ResponseLocal<FutureGlobal>> {
+        return await this.featureGlobalService.removeBySenderPsid(senderPsid);
+    }
+    async changeFutureGlobalStatus(senderPsid: string): Promise<ResponseLocal<FutureGlobal>> {
+        return await this.featureGlobalService.changeStatus(senderPsid);
+    }
+    async createFutureGlobalByAdmin(senderPsid: string): Promise<ResponseLocal<FutureGlobal>> {
+        return await this.featureGlobalService.createByAdmin(senderPsid);
+    }
+
+    async getFeatureGlobal(senderPsidAdd: string) {
+        return await this.featureGlobalService.findOneBySenderPsid(senderPsidAdd);
     }
 }
