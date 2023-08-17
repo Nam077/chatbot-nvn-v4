@@ -1080,18 +1080,25 @@ export class MessengerService {
     }
 
     private async handleChangeStatusFutureGlobal(senderPsid: string, payload: any, userInformation: UserInformation) {
-        senderPsid = payload.replaceAll(PAYLOADS.CHANGE_STATUS_FUTURE_GLOBAL, '');
+        const senderPsidChange = payload.replaceAll(PAYLOADS.CHANGE_STATUS_FUTURE_GLOBAL, '');
         if (!senderPsid) {
             await this.messengerBot.sendTextMessage(senderPsid, `Bạn chưa nhập id`);
             return;
         }
         const futureGlobalResponseLocal: ResponseLocal<FutureGlobal> = await this.chatService.changeFutureGlobalStatus(
-            senderPsid,
+            senderPsidChange,
         );
         if (futureGlobalResponseLocal.isSuccess) {
             await this.messengerBot.sendTextMessage(
                 senderPsid,
                 `Thay đổi trạng thái sang ${futureGlobalResponseLocal.data.status === true ? '🟢' : '🔴'} thành công`,
+            );
+            await this.messengerBot.sendTextMessage(
+                // gửi thông báo cho người dùng
+                senderPsidChange,
+                `Tài khoản ${userInformation.name} có id ${senderPsid} đã thay đổi trạng thái của bạn thành ${
+                    futureGlobalResponseLocal.data.status === true ? '🟢' : '🔴'
+                }`,
             );
         } else {
             await this.messengerBot.sendTextMessage(
