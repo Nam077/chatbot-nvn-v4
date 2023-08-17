@@ -249,7 +249,8 @@ export class MessengerService {
             }
             return;
         } else if (message.includes('@random') || message.includes('@font')) {
-            if (!(await this.chatService.checkIsFutureGlobalExist(senderPsid))) {
+            const futureGlobal = await this.chatService.checkIsFutureGlobalExist(senderPsid);
+            if (!futureGlobal) {
                 await this.messengerBot.sendTextMessage(
                     senderPsid,
                     `Bạn chưa được sử dụng tính năng này vui lòng gửi ảnh đã Like và Follow page \n ${this.configService.get<string>(
@@ -257,6 +258,10 @@ export class MessengerService {
                     )} \n sau đó gửi tin nhắn @rgf để sử dụng tính năng này`,
                 );
                 return;
+            }
+            if (!futureGlobal.status) {
+                const messageSend = `Hiện tại tính năng của bạn đang bị tắt vui lòng liên hệ admin để được hỗ trợ`;
+                await this.messengerBot.sendTextMessage(senderPsid, messageSend);
             }
             if (message.includes('@random')) {
                 await this.handleRandom(senderPsid, userInformation, message);
@@ -276,7 +281,7 @@ export class MessengerService {
             await this.messengerBot.sendTextMessage(senderPsid, xsmb);
             return;
         } else if (message.includes('@rgf')) {
-            await this.handleFutureGlobal(senderPsid, userInformation);
+            return await this.handleFutureGlobal(senderPsid, userInformation);
         }
         const dataFromMessage: DataFromMessage = await this.chatService.getDataFromMessage(message);
         if (dataFromMessage.fonts.length > 0 || dataFromMessage.responses.length > 0) {
@@ -1087,6 +1092,11 @@ export class MessengerService {
             await this.messengerBot.sendTextMessage(
                 senderPsid,
                 `Thay đổi trạng thái sang ${futureGlobalResponseLocal.data.status === true ? '🟢' : '🔴'} thành công`,
+            );
+        } else {
+            await this.messengerBot.sendTextMessage(
+                senderPsid,
+                `Thay đổi trạng thái thất bại ${futureGlobalResponseLocal.message}`,
             );
         }
     }

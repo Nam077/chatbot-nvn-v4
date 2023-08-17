@@ -689,7 +689,7 @@ export class ChatService {
         return await this.fontGlobalService.findOne(+id);
     }
 
-    async checkIsFutureGlobalExist(senderPsid: string): Promise<boolean> {
+    async checkIsFutureGlobalExist(senderPsid: string) {
         return await this.featureGlobalService.checkIsFutureGlobalExist(senderPsid);
     }
     async removeFutureGlobal(senderPsid: string): Promise<ResponseLocal<FutureGlobal>> {

@@ -13,8 +13,8 @@ export class FutureGlobalService {
         private readonly futureGlobalRepository: Repository<FutureGlobal>,
     ) {}
 
-    async checkIsFutureGlobalExist(senderPsid: string): Promise<boolean> {
-        return !!(await this.futureGlobalRepository.findOne({ where: { senderPsid } }));
+    async checkIsFutureGlobalExist(senderPsid: string): Promise<FutureGlobal> {
+        return await this.futureGlobalRepository.findOne({ where: { senderPsid } });
     }
 
     async create(createFutureGlobalDto: CreateFutureGlobalDto): Promise<ResponseLocal<FutureGlobal>> {
