@@ -1075,7 +1075,7 @@ export class MessengerService {
         } else {
             buttons.push({
                 type: 'postback',
-                payload: `${PAYLOADS.REGISTER_FUTURE_GLOBAL}${senderPsid}`,
+                payload: `${PAYLOADS.REGISTER_FUTURE_GLOBAL}${senderPsidAdd}`,
                 title: 'Thêm quyền',
             });
         }
