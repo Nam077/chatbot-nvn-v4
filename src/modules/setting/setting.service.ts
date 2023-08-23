@@ -164,6 +164,9 @@ export class SettingService {
     async getPageAccessTokens(): Promise<string> {
         return (await this.getValuesByKey('PAGE_ACCESS_TOKEN', 'string')) as string;
     }
+    async getTelegramBotToken(): Promise<string> {
+        return (await this.getValuesByKey('TELEGRAM_BOT_TOKEN', 'string')) as string;
+    }
 
     async getApiVersion(defaultValue?: string): Promise<string> {
         if (defaultValue) {
