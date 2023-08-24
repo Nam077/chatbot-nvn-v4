@@ -31,7 +31,7 @@ export class MessageController {
     }
 
     @Patch(':id')
-    @ApiOperation({ summary: 'Update message by id' })
+    @ApiOperation({ summary: 'BotUpdate message by id' })
     update(@Param('id') id: string, @Body() updateMessageDto: UpdateMessageDto) {
         return this.messageService.update(+id, updateMessageDto);
     }

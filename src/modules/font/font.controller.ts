@@ -36,7 +36,7 @@ export class FontController {
     }
 
     @Patch(':id')
-    @ApiOperation({ summary: 'Update font by id' })
+    @ApiOperation({ summary: 'BotUpdate font by id' })
     update(@Param('id') id: string, @Body() updateFontDto: UpdateFontDto) {
         return this.fontService.update(+id, updateFontDto);
     }

@@ -37,7 +37,7 @@ export class FoodController {
     }
 
     @Patch(':id')
-    @ApiOperation({ summary: 'Update food by id' })
+    @ApiOperation({ summary: 'BotUpdate food by id' })
     update(@Param('id') id: string, @Body() updateFoodDto: UpdateFoodDto) {
         return this.foodService.update(+id, updateFoodDto);
     }

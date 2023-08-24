@@ -31,7 +31,7 @@ export class SettingController {
     }
 
     @Patch(':id')
-    @ApiOperation({ summary: 'Update setting by id' })
+    @ApiOperation({ summary: 'BotUpdate setting by id' })
     update(@Param('id') id: string, @Body() updateSettingDto: UpdateSettingDto) {
         return this.settingService.update(+id, updateSettingDto);
     }

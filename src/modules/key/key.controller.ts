@@ -31,7 +31,7 @@ export class KeyController {
     }
 
     @Patch(':id')
-    @ApiOperation({ summary: 'Update key by id' })
+    @ApiOperation({ summary: 'BotUpdate key by id' })
     update(@Param('id') id: string, @Body() updateKeyDto: UpdateKeyDto) {
         return this.keyService.update(+id, updateKeyDto);
     }

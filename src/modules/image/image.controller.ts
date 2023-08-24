@@ -31,7 +31,7 @@ export class ImageController {
     }
 
     @Patch(':id')
-    @ApiOperation({ summary: 'Update image by id' })
+    @ApiOperation({ summary: 'BotUpdate image by id' })
     update(@Param('id') id: string, @Body() updateImageDto: UpdateImageDto) {
         return this.imageService.update(+id, updateImageDto);
     }

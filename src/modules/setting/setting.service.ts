@@ -89,7 +89,7 @@ export class SettingService {
         return {
             data: result,
             isSuccess: true,
-            message: 'Update setting successfully',
+            message: 'BotUpdate setting successfully',
             statusCode: HttpStatus.OK,
         };
     }

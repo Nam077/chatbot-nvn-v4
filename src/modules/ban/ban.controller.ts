@@ -31,7 +31,7 @@ export class BanController {
     }
 
     @Patch(':id')
-    @ApiOperation({ summary: 'Update ban by id' })
+    @ApiOperation({ summary: 'BotUpdate ban by id' })
     update(@Param('id') id: string, @Body() updateBanDto: UpdateBanDto) {
         return this.banService.update(+id, updateBanDto);
     }

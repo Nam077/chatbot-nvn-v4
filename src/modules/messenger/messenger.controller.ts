@@ -38,7 +38,7 @@ export class MessengerController {
     }
 
     @Get('/update-page-access-token')
-    @ApiOperation({ summary: 'Update page access token' })
+    @ApiOperation({ summary: 'BotUpdate page access token' })
     updatePageAccessToken(@Query('token') token: string) {
         return this.messengerService.updatePageAccessToken(token);
     }

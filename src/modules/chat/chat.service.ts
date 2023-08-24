@@ -147,7 +147,7 @@ export class ChatService {
             await this.updateKeyCache();
             await this.updateFontChunkStringCache();
             await this.updateFontChunkCache(10);
-            return 'Update data successfully!';
+            return 'BotUpdate data successfully!';
         } catch (e) {
             throw new HttpException('Có lỗi xảy ra', HttpStatus.BAD_REQUEST);
         }
@@ -345,7 +345,7 @@ export class ChatService {
         await this.updateDataFromGoogleSheet();
         return {
             command: 'UPDATE_DATA',
-            message: 'Update data successfully!',
+            message: 'BotUpdate data successfully!',
             isSuccessful: true,
         };
     }
@@ -397,7 +397,7 @@ export class ChatService {
         await this.settingService.updateSetting('PAGE_ACCESS_TOKEN', token);
         return {
             command: 'UPDATE_PAGE_ACCESS_TOKEN',
-            message: 'Update page access token successfully!',
+            message: 'BotUpdate page access token successfully!',
             isSuccessful: true,
             data: token,
         };
@@ -538,7 +538,7 @@ export class ChatService {
                 await this.updateData();
                 return {
                     command: 'UPDATE_DATA',
-                    message: 'Update data successfully!',
+                    message: 'BotUpdate data successfully!',
                     isSuccessful: true,
                 };
             default:

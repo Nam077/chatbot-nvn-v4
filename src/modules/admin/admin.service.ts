@@ -86,7 +86,7 @@ export class AdminService {
         await this.adminRepository.update(id, updateAdminDto);
         return {
             isSuccess: true,
-            message: 'Update admin successfully',
+            message: 'BotUpdate admin successfully',
             statusCode: HttpStatus.OK,
             data: await this.findOne(id),
         };

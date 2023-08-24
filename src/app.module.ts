@@ -24,7 +24,7 @@ import { APP_GUARD } from '@nestjs/core';
 import { FoodModule } from './modules/food/food.module';
 import { FontGlobalModule } from './modules/font-global/font-global.module';
 import { FutureGlobalModule } from './modules/future-global/future-global.module';
-import { TelegrafBotModule } from './modules/telegraf/telegraf.module';
+import { TelegramModule } from './modules/telegram/telegram.module';
 
 @Module({
     imports: [
@@ -52,6 +52,7 @@ import { TelegrafBotModule } from './modules/telegraf/telegraf.module';
         FoodModule,
         FontGlobalModule,
         FutureGlobalModule,
+        TelegramModule,
     ],
     controllers: [AppController],
     providers: [

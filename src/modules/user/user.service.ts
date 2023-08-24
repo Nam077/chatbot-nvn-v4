@@ -97,7 +97,7 @@ export class UserService {
         return {
             data: await this.findOne(id),
             isSuccess: true,
-            message: 'Update user successfully',
+            message: 'BotUpdate user successfully',
             statusCode: HttpStatus.OK,
         };
     }

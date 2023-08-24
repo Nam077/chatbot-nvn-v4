@@ -37,7 +37,7 @@ export class AdminController {
     }
 
     @Patch(':id')
-    @ApiOperation({ summary: 'Update admin by id' })
+    @ApiOperation({ summary: 'BotUpdate admin by id' })
     update(@Param('id') id: string, @Body() updateAdminDto: UpdateAdminDto) {
         return this.adminService.update(+id, updateAdminDto);
     }

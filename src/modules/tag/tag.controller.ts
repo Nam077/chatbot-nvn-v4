@@ -31,7 +31,7 @@ export class TagController {
     }
 
     @Patch(':id')
-    @ApiOperation({ summary: 'Update tag by id' })
+    @ApiOperation({ summary: 'BotUpdate tag by id' })
     update(@Param('id') id: string, @Body() updateTagDto: UpdateTagDto) {
         return this.tagService.update(+id, updateTagDto);
     }

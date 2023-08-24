@@ -31,7 +31,7 @@ export class UserController {
     }
 
     @Patch(':id')
-    @ApiOperation({ summary: 'Update user by id' })
+    @ApiOperation({ summary: 'BotUpdate user by id' })
     update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
         return this.userService.update(+id, updateUserDto);
     }

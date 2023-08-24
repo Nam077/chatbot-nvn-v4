@@ -87,7 +87,7 @@ export class BanService {
         await this.banRepository.update(id, updateBanDto);
         return {
             isSuccess: true,
-            message: 'Update ban successfully',
+            message: 'BotUpdate ban successfully',
             statusCode: HttpStatus.OK,
             data: await this.findOne(id),
         };
@@ -226,7 +226,7 @@ export class BanService {
         await this.banRepository.update(ban.id, { name });
         return {
             isSuccess: true,
-            message: 'Update ban name successfully',
+            message: 'BotUpdate ban name successfully',
             data: await this.findOne(ban.id),
         };
     }

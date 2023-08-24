@@ -31,7 +31,7 @@ export class ResponseController {
     }
 
     @Patch(':id')
-    @ApiOperation({ summary: 'Update response by id' })
+    @ApiOperation({ summary: 'BotUpdate response by id' })
     update(@Param('id') id: string, @Body() updateResponseDto: UpdateResponseDto) {
         return this.responseService.update(+id, updateResponseDto);
     }

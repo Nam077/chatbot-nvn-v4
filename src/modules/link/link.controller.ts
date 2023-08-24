@@ -31,7 +31,7 @@ export class LinkController {
     }
 
     @Patch(':id')
-    @ApiOperation({ summary: 'Update link by id' })
+    @ApiOperation({ summary: 'BotUpdate link by id' })
     update(@Param('id') id: string, @Body() updateLinkDto: UpdateLinkDto) {
         return this.linkService.update(+id, updateLinkDto);
     }

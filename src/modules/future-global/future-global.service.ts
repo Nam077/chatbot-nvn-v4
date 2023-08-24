@@ -67,7 +67,7 @@ export class FutureGlobalService {
         await this.futureGlobalRepository.update({ id }, updateFutureGlobalDto);
         return {
             data: await this.findOne(id),
-            message: 'Update FutureGlobal successfully',
+            message: 'BotUpdate FutureGlobal successfully',
             isSuccess: true,
         };
     }

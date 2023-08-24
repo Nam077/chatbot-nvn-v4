@@ -31,7 +31,7 @@ export class FontChunkController {
     }
 
     @Patch(':id')
-    @ApiOperation({ summary: 'Update font-chunk by id' })
+    @ApiOperation({ summary: 'BotUpdate font-chunk by id' })
     update(@Param('id') id: string, @Body() updateFontChunkDto: UpdateFontChunkDto) {
         return this.fontChunkService.update(+id, updateFontChunkDto);
     }
