@@ -52,7 +52,6 @@ import { TelegrafBotModule } from './modules/telegraf/telegraf.module';
         FoodModule,
         FontGlobalModule,
         FutureGlobalModule,
-        TelegrafBotModule,
     ],
     controllers: [AppController],
     providers: [
