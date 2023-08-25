@@ -102,8 +102,11 @@ export class GoogleSheetService {
     constructor(private readonly configService: ConfigService) {}
     private async initSheet(): Promise<void> {
         try {
-
-            this.doc = new GoogleSpreadsheet(this.configService.get<string>('GOOGLE_SHEET_ID'),  {apiKey:this.configService.get<string>('GOOGLE_SHEET_PRIVATE_KEY').replace(/\\\\n/g, '\n')});
+            this.doc = new GoogleSpreadsheet(this.configService.get<string>('GOOGLE_SHEET_ID'));
+            await this.doc.useServiceAccountAuth({
+                client_email: this.configService.get<string>('GOOGLE_SHEET_CLIENT_EMAIL'),
+                private_key: this.configService.get<string>('GOOGLE_SHEET_PRIVATE_KEY').replace(/\\\\n/g, '\n'),
+            });
             await this.doc.loadInfo();
         } catch (error) {
             console.log(error);
@@ -141,7 +144,7 @@ export class GoogleSheetService {
         const fonts: FontExcel[] = [];
 
         rowsFont.forEach((rowFont: GoogleSpreadsheetRow) => {
-            if (rowFont.get('Name') && rowFont.get('Name') !== '') {
+            if (rowFont.Name && rowFont.Name !== '') {
                 const font: FontExcel = this.getDataRowFont(rowFont);
                 fonts.push(font);
 
@@ -241,9 +244,9 @@ export class GoogleSheetService {
     }
 
     public getDataRowFont(rowFont: GoogleSpreadsheetRow): FontExcel {
-        const name: string = this.removeExtraSpaces(rowFont.get('Name'));
-        const urlPost: string = (rowFont.get('Post_Link') ?? URL_FAN_PAGE).trim();
-        const description: string = this.removeExtraSpaces(rowFont.get('Description') ?? `Bộ font ${name} của NVN Font`);
+        const name: string = this.removeExtraSpaces(rowFont.Name);
+        const urlPost: string = (rowFont.Post_Link ?? URL_FAN_PAGE).trim();
+        const description: string = this.removeExtraSpaces(rowFont.Description ?? `Bộ font ${name} của NVN Font`);
         return {
             name,
             urlPost,
@@ -272,8 +275,8 @@ export class GoogleSheetService {
         const linkCheck: Set<string> = new Set<string>();
         const tagCheck: Set<string> = new Set<string>();
 
-        if (row.get('Keys')) {
-            const keysTemp: string[] = row.get('Keys').split('\n')
+        if (row.Keys) {
+            const keysTemp: string[] = row.Keys.split('\n')
                 .map((key: string) => key.trim())
                 .filter((key: string) => key !== '');
             keysTemp.forEach((key: string) => {
@@ -288,13 +291,13 @@ export class GoogleSheetService {
             });
             if (keys.length === 0) {
                 keys.push({
-                    name: this.removeAllSpecialCharacters(row.get('Name')),
-                    value: this.removeAllSpecialCharacters(row.get('Name')).toLowerCase(),
+                    name: this.removeAllSpecialCharacters(row.Name),
+                    value: this.removeAllSpecialCharacters(row.Name).toLowerCase(),
                 });
             }
         }
-        if (row.get('Images')) {
-            const imagesTemp: string[] = row.get('Images').split('\n')
+        if (row.Images) {
+            const imagesTemp: string[] = row.Images.split('\n')
                 .map((image: string) => image.trim())
                 .filter((image: string) => image !== '');
             imagesTemp.forEach((image: string) => {
@@ -306,8 +309,8 @@ export class GoogleSheetService {
                 }
             });
         }
-        if (row.get('Messages')) {
-            const messagesTemp: string[] = row.get('Messages').split('---split---')
+        if (row.Messages) {
+            const messagesTemp: string[] = row.Messages.split('---split---')
                 .map((message: string) => message.trim())
                 .filter((message: string) => message !== '');
             messagesTemp.forEach((message: string) => {
@@ -321,12 +324,12 @@ export class GoogleSheetService {
             });
             if (messages.length === 0) {
                 messages.push({
-                    value: `Bộ font ${row.get('Name')} của NVN Font`,
+                    value: `Bộ font ${row.Name} của NVN Font`,
                 });
             }
         }
-        if (row.get('Links')) {
-            const linksTemp: string[] = row.get('Links').split('\n')
+        if (row.Links) {
+            const linksTemp: string[] = row.Links.split('\n')
                 .map((link: string) => link.trim())
                 .filter((link: string) => link !== '');
             linksTemp.forEach((link: string) => {
@@ -338,8 +341,8 @@ export class GoogleSheetService {
                 }
             });
         }
-        if (row.get('Tags')) {
-            const tagsTemp: string[] = row.get('Tags').split(',')
+        if (row.Tags) {
+            const tagsTemp: string[] = row.Tags.split(',')
                 .map((tag: string) => tag.trim())
                 .filter((tag: string) => tag !== '');
             tagsTemp.forEach((tag: string) => {
